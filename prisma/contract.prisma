@@ -1,0 +1,305 @@
+// use prisma-8
+
+model Invoice {
+  id             Int       @id @default(autoincrement())
+  payment_type   String 
+  paid_in_date   DateTime?
+  total_min      Int
+  paid_in_amount Int
+  payment_status String?   
+  payment_method String? 
+  payment_proof_url String?
+  member_id      String?
+  venue_id       Int?
+  approved_by    Int?
+     createdAt DateTime 
+  updatedAt DateTime  
+
+  admin         Admin?               @relation(fields: [approved_by], references: [id])
+  subscriptions MemberSubscription[]
+  matches       MatchHistory[]
+
+  @@map("invoice")
+}
+
+model Admin {
+  id         Int       @id @default(autoincrement())
+  f_name     String    
+  l_name     String?   
+  password   String?   
+  status     Int?      
+  role       Int
+  created_at DateTime?   
+  updatedAt DateTime?
+
+  admin_role        AdminRole    @relation(fields: [role], references: [id])
+  approved_invoices Invoice[]
+  managed_venues    Venue[]      @relation("VenueResponsiblePerson")
+  created_tables    VenueTable[] @relation("VenueTableCreatedByAdmin")
+
+  @@map("admin")
+}
+
+model AdminRole {
+  id     Int     @id @default(autoincrement())
+  name   String? 
+  status String? 
+
+  admins  Admin[]
+  vendors Vendor[]
+
+  @@map("admin_role")
+}
+
+model Venue {
+  id                       Int       @id @default(autoincrement())
+  name                     String?   
+  commission               Int  
+  can_change_price_per_min Int?      
+  vendor_id                Int?
+  address                  String?   
+  pricing_method           String?   
+  responsible_person       Int?
+  price_per_min            Int?
+  google_map_link          String?  
+  district                 Int?
+  longtude                 String?   
+  latitude                 String?   
+  status                   Int?
+  is_deleted               Int?      
+     createdAt DateTime 
+  updatedAt DateTime  
+
+  vendor_owner  Vendor?        @relation("VenueVendorOwner", fields: [vendor_id], references: [id])
+  admin_manager Admin?         @relation("VenueResponsiblePerson", fields: [responsible_person], references: [id])
+  district_rel  District?      @relation(fields: [district], references: [id])
+  vendors       Vendor[]       @relation("VendorVenue")
+  tables        VenueTable[]
+  matches       MatchHistory[]
+
+  @@map("venue")
+}
+
+model Vendor {
+  id                Int       @id @default(autoincrement())
+  f_name            String?    
+  l_name            String?    
+  venue_id          Int?
+  password          String?    
+  role              Int?
+  phone_number      String?    
+  email             String?    
+  telegram_username String?    
+  whats_up_username String?    
+     createdAt DateTime 
+  updatedAt DateTime   
+
+  admin_role     AdminRole? @relation(fields: [role], references: [id])
+  venue          Venue?     @relation("VendorVenue", fields: [venue_id], references: [id])
+  managed_venues Venue[]    @relation("VenueVendorOwner")
+
+  @@map("vendor")
+}
+
+model BrilliantMoveSubmission {
+  id          Int       @id @default(autoincrement())
+  user_id     String?    
+  platform    String?    
+  admin_vote  Int?
+  is_deleted    Int?
+  move_url    String?    
+  week_number Int?
+  rank        Int?
+  is_awarded  Int?
+     createdAt DateTime 
+  updatedAt DateTime   
+
+  member Member? @relation(fields: [user_id], references: [id])
+  votes  Vote[]
+
+  @@map("brilliant_move_submission")
+}
+
+model Vote {
+  id            Int       @id @default(autoincrement())
+  user_id       String?    
+  vote_type     String?    
+  submission_id Int?
+  status        Int?      
+     createdAt DateTime 
+  updatedAt DateTime  
+
+  submission BrilliantMoveSubmission? @relation(fields: [submission_id], references: [id])
+  member     Member?                  @relation(fields: [user_id], references: [id])
+
+  @@map("vote")
+}
+
+model District {
+  id     Int     @id @default(autoincrement())
+  name   String?  
+  status Int?    
+
+  venues  Venue[]
+  members Member[]
+
+  @@map("district")
+}
+
+model Member {
+  id                String    @unique   
+  f_name            String?    
+  l_name            String?    
+  chat_id           String?    
+  phone             String     
+  telegram_username String?    
+  trophy            String?    
+  is_member         Int?      
+  member_title      String?    
+  eth_chess_rating  Int?
+  password          String?    
+  address           String?    
+  profile_picture   String?    
+  district          Int?
+  status            Int?         
+  is_deleted        Int?         
+  role              String?    
+     createdAt DateTime 
+  updatedAt DateTime  
+
+  district_rel District? @relation(fields: [district], references: [id])
+
+  details                    MemberDetails[]
+  subscriptions              MemberSubscription[]
+  brilliant_move_submissions BrilliantMoveSubmission[]
+  votes                      Vote[]
+  matches_as_user            MatchHistory[]            @relation("MatchUser")
+  matches_as_white           MatchHistory[]            @relation("MatchWhitePlayer")
+  matches_as_black           MatchHistory[]            @relation("MatchBlackPlayer")
+  matches_won                MatchHistory[]            @relation("MatchWinner")
+
+  @@id([id, phone])
+  @@map("members")
+}
+
+model MemberDetails {
+  id                          Int       @id @default(autoincrement())
+  user_id                     String?    
+  chess_dot_com_username      String?    
+  lichess_username            String?    
+  lichess_classical_rating    Int?
+  lichess_rapid_rating        Int?
+  lichess_blitz_rating        Int?
+  lichess_bullet_rating       Int?
+  chess_dot_com_bullet_rating Int?
+  chess_dot_com_blitz_rating  Int?
+  chess_dot_com_rapid_rating  Int?
+  chess_dot_com_info          Json?        
+  lichess_info                Json?        
+  fide_standard_rating        Int?
+  fide_rapid_rating           Int?
+  fide_blitz_rating           Int?
+     createdAt DateTime 
+  updatedAt DateTime  
+
+  member Member? @relation(fields: [user_id], references: [id])
+
+  @@map("member_details")
+}
+
+model MemberSubscription {
+  id                  Int       @id @default(autoincrement())
+  user_id             String?    
+  tier_id             Int?
+  start_date          DateTime?   
+  end_date            DateTime? 
+  subscription_status String?    
+  status              Int?
+  invoice_id          Int?
+     createdAt DateTime 
+  updatedAt DateTime  
+
+  member  Member?         @relation(fields: [user_id], references: [id])
+  tier    MembershipTier? @relation(fields: [tier_id], references: [id])
+  invoice Invoice?        @relation(fields: [invoice_id], references: [id])
+
+  @@map("member_subscriptions")
+}
+
+model MembershipTier {
+  id            Int       @id @default(autoincrement())
+  name          String    
+  price         Int
+  duration_days Int?
+     createdAt DateTime 
+  updatedAt DateTime   
+
+  subscriptions MemberSubscription[]
+
+  @@map("membership_tiers")
+}
+
+model MatchHistory {
+  id                  Int       @id @default(autoincrement())
+  user_id             String?    
+  started_at          DateTime?   
+  game_end_at         DateTime? 
+  time_in_min         Int?
+   price_per_min            Int?
+  white_player_id     String?    
+  black_player_id     String?    
+  winner_id           String?    
+  venue_id            Int?
+  is_loser_approved   Int?         
+  table_id            Int?
+  pricing_method      String?    
+  status              String?    
+  commission_percent  Int?
+  commission_amount   Int?
+  cancellation_reason Int?
+  venue_fee           Int?
+  chat_id             Int?
+  is_club_paid        Int?
+  invoice_id          Int?
+  log_details         Json?        
+     createdAt DateTime 
+  updatedAt DateTime   
+
+  user                Member?             @relation("MatchUser", fields: [user_id], references: [id])
+  white_player        Member?             @relation("MatchWhitePlayer", fields: [white_player_id], references: [id])
+  black_player        Member?             @relation("MatchBlackPlayer", fields: [black_player_id], references: [id])
+  winner              Member?             @relation("MatchWinner", fields: [winner_id], references: [id])
+  venue               Venue?              @relation(fields: [venue_id], references: [id])
+  table               VenueTable?         @relation(fields: [table_id], references: [id])
+  cancel_reason_rel   CancellationReason? @relation(fields: [cancellation_reason], references: [id])
+  invoice             Invoice?            @relation(fields: [invoice_id], references: [id])
+
+  @@map("match_history")
+}
+
+model CancellationReason {
+  id     Int     @id @default(autoincrement())
+  name   String?  
+  status String?  
+
+  matches MatchHistory[]
+
+  @@map("cancellation_reason")
+}
+
+model VenueTable {
+  id           Int       @id @default(autoincrement())
+  venue_id     Int?
+  name         String?    
+  status       Int?         
+  created_by   Int?      
+  ideal_player String?    
+     createdAt DateTime 
+  updatedAt DateTime  
+
+  venue         Venue?         @relation(fields: [venue_id], references: [id])
+  admin_creator Admin?         @relation("VenueTableCreatedByAdmin", fields: [created_by], references: [id])
+  matches       MatchHistory[]
+
+  @@map("venue_table")
+} 

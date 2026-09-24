@@ -1,0 +1,170 @@
+[
+  {
+    "id": "column.public.brilliant_move_submission.is_deleted",
+    "label": "Add column \"is_deleted\" to \"brilliant_move_submission\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "is_deleted",
+        "table": "brilliant_move_submission"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"is_deleted\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "brilliant_move_submission",
+          "is_deleted"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"is_deleted\"",
+        "sql": "ALTER TABLE \"public\".\"brilliant_move_submission\" ADD COLUMN \"is_deleted\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"is_deleted\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "brilliant_move_submission",
+          "is_deleted"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.invoice.payment_proof_url",
+    "label": "Add column \"payment_proof_url\" to \"invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "payment_proof_url",
+        "table": "invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"payment_proof_url\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "invoice",
+          "payment_proof_url"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"payment_proof_url\"",
+        "sql": "ALTER TABLE \"public\".\"invoice\" ADD COLUMN \"payment_proof_url\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"payment_proof_url\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "invoice",
+          "payment_proof_url"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.match_history.price_per_min",
+    "label": "Add column \"price_per_min\" to \"match_history\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "price_per_min",
+        "table": "match_history"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"price_per_min\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "match_history",
+          "price_per_min"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"price_per_min\"",
+        "sql": "ALTER TABLE \"public\".\"match_history\" ADD COLUMN \"price_per_min\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"price_per_min\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "match_history",
+          "price_per_min"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.venue.price_per_min",
+    "label": "Add column \"price_per_min\" to \"venue\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "price_per_min",
+        "table": "venue"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"price_per_min\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "venue",
+          "price_per_min"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"price_per_min\"",
+        "sql": "ALTER TABLE \"public\".\"venue\" ADD COLUMN \"price_per_min\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"price_per_min\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "venue",
+          "price_per_min"
+        ]
+      }
+    ]
+  }
+]

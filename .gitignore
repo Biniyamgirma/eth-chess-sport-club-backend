@@ -1,0 +1,7 @@
+.env
+/.agents
+/.claude
+/.cursor
+/.devin
+/dist
+/node_modules

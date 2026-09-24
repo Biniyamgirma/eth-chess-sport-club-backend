@@ -1,0 +1,209 @@
+[
+  {
+    "id": "column.public.invoice.member_id",
+    "label": "Add column \"member_id\" to \"invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "member_id",
+        "table": "invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"member_id\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "invoice",
+          "member_id"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"member_id\"",
+        "sql": "ALTER TABLE \"public\".\"invoice\" ADD COLUMN \"member_id\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"member_id\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "invoice",
+          "member_id"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.invoice.venue_id",
+    "label": "Add column \"venue_id\" to \"invoice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "venue_id",
+        "table": "invoice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"venue_id\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "invoice",
+          "venue_id"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"venue_id\"",
+        "sql": "ALTER TABLE \"public\".\"invoice\" ADD COLUMN \"venue_id\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"venue_id\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "invoice",
+          "venue_id"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.match_history.invoice_id",
+    "label": "Add column \"invoice_id\" to \"match_history\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "invoice_id",
+        "table": "match_history"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"invoice_id\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "match_history",
+          "invoice_id"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"invoice_id\"",
+        "sql": "ALTER TABLE \"public\".\"match_history\" ADD COLUMN \"invoice_id\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"invoice_id\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "match_history",
+          "invoice_id"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.match_history.match_history_invoice_id_idx_a3b7555d",
+    "label": "Create index \"match_history_invoice_id_idx_a3b7555d\" on \"match_history\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "match_history_invoice_id_idx_a3b7555d",
+        "table": "match_history"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"match_history_invoice_id_idx_a3b7555d\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"match_history_invoice_id_idx_a3b7555d\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"match_history_invoice_id_idx_a3b7555d\"",
+        "sql": "CREATE INDEX \"match_history_invoice_id_idx_a3b7555d\" ON \"public\".\"match_history\" (\"invoice_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"match_history_invoice_id_idx_a3b7555d\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"match_history_invoice_id_idx_a3b7555d\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.match_history.match_history_invoice_id_fkey",
+    "label": "Add foreign key \"match_history_invoice_id_fkey\" on \"match_history\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "match_history_invoice_id_fkey",
+        "table": "match_history"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"match_history_invoice_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "match_history_invoice_id_fkey",
+          "public",
+          "\"public\".\"match_history\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"match_history_invoice_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"match_history\"\nADD CONSTRAINT \"match_history_invoice_id_fkey\"\nFOREIGN KEY (\"invoice_id\")\nREFERENCES \"public\".\"invoice\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"match_history_invoice_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "match_history_invoice_id_fkey",
+          "public",
+          "\"public\".\"match_history\""
+        ]
+      }
+    ]
+  }
+]
