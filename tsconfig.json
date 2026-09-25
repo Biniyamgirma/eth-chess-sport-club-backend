@@ -12,6 +12,7 @@
     "target": "esnext",
     
     "types": ["node"],
+    "typeRoots": ["./node_modules/@types"],
     // For nodejs:
     // "lib": ["esnext"npm install @types/node --save],
     // "types": ["node"],
