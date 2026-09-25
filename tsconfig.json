@@ -13,7 +13,7 @@
     
     "types": ["node"],
     // For nodejs:
-    // "lib": ["esnext"],
+    // "lib": ["esnext"npm install @types/node --save],
     // "types": ["node"],
     // and npm install -D @types/node
 
