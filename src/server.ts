@@ -1,8 +1,8 @@
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import * as helmet from 'helmet';
+import * as rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import authRoutes from './routes/auth.routes.js';
@@ -25,9 +25,9 @@ app.use(
   }),
 );
 
-app.use(helmet());
+app.use(helmet.default());
 app.use(
-  rateLimit({
+  rateLimit.default({
     windowMs: 15 * 60 * 1000,
     max: 200,
     standardHeaders: true,
