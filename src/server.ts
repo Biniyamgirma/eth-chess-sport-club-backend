@@ -1,8 +1,8 @@
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
-import helmetImport from "helmet";
-import rateLimitImport from "express-rate-limit";
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import authRoutes from './routes/auth.routes.js';
@@ -24,8 +24,7 @@ app.use(
     credentials: true,
   }),
 );
-const helmet = (helmetImport as unknown as { default?: typeof helmetImport }).default ?? helmetImport;
-const rateLimit = (rateLimitImport as unknown as { default?: typeof rateLimitImport }).default ?? rateLimitImport;
+
 app.use(helmet());
 app.use(
   rateLimit({
