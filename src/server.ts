@@ -1,8 +1,10 @@
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
-import * as helmet from 'helmet';
-import * as rateLimit from 'express-rate-limit';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 import { env } from './config/env.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import authRoutes from './routes/auth.routes.js';
