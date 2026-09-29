@@ -3,6 +3,22 @@ import type { NextFunction, Request, Response } from 'express';
 import { AppError } from '../middlewares/errorHandler.js';
 import { memberService } from '../services/member.service.js';
 
+function formatAddisTime(value: unknown): string | null {
+  if (!value) return null;
+
+  // Normalize to a Temporal.Instant regardless of what the ORM returned
+  const instant =
+    value instanceof Temporal.Instant
+      ? value
+      : Temporal.Instant.from(String(value));
+
+  const zoned = instant.toZonedDateTimeISO('Africa/Addis_Ababa');
+
+  // Manual format, e.g. "2026-09-28 16:42:29"
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${zoned.year}-${pad(zoned.month)}-${pad(zoned.day)} ${pad(zoned.hour)}:${pad(zoned.minute)}:${pad(zoned.second)}`;
+}
+
 export const registerMember = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const member = await memberService.registerMember(req.body);
@@ -15,7 +31,18 @@ export const registerMember = async (req: Request, res: Response, next: NextFunc
 export const listMembers = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const members = await memberService.listMembers();
-    return res.status(200).json({ success: true, data: members });
+
+    const formattedMembers = [];
+    for (const member of members) {
+      const { password, ...rest } = member; // strip sensitive field
+      formattedMembers.push({
+        ...rest,
+        createdAt: formatAddisTime(member.createdAt),
+        updatedAt: formatAddisTime(member.updatedAt),
+      });
+    }
+
+    return res.status(200).json({ success: true, data: formattedMembers });
   } catch (error) {
     return next(error);
   }

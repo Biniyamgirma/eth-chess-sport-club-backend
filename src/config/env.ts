@@ -10,6 +10,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32).default('this_is_a_dev_secret_key_change_it_immediately'),
   JWT_EXPIRES_IN: z.string().default('7d'),
   TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_BOT_API_SECRET: z.string().min(32).optional(),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(16).optional(),
 });
 

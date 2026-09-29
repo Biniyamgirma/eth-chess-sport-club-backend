@@ -14,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@js-temporal/polyfill": "^0.5.1",
     "@prisma/orm-postgres": "^8.0.0-rc.11",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",

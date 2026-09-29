@@ -75,3 +75,50 @@ export const telegramMatchWebhook = async (req: Request, res: Response, next: Ne
     return next(error);
   }
 };
+
+export const joinMatchTableForTelegram = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await matchService.joinTableForTelegram(
+      req.body.chat_id,
+      Number(req.params.tableId),
+    );
+    return res.status(result.state === 'match_pending_start' ? 201 : 200).json({ success: true, data: result });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const startMatchForTelegram = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await matchService.startMatchForTelegram(req.body.chat_id, Number(req.params.id));
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const requestMatchEndForTelegram = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await matchService.requestMatchEndForTelegram(
+      req.body.chat_id,
+      Number(req.params.id),
+      req.body.loser,
+    );
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const confirmLoserForTelegram = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await matchService.confirmLoserForTelegram(
+      req.body.chat_id,
+      Number(req.params.id),
+      req.body.token,
+    );
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    return next(error);
+  }
+};

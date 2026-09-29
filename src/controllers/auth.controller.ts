@@ -47,6 +47,7 @@ export const phoneLogin = async (req: Request, res: Response, next: NextFunction
       identifier: phone,
       password,
       role: 'member',
+      identifierType: 'phone',
     });
 
     res.cookie('token', result.token, {
@@ -86,6 +87,32 @@ export const linkTelegramAccount = async (req: Request, res: Response, next: Nex
       success: true,
       message: 'Telegram account linked successfully',
       data: { member },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const linkTelegramVendorAccount = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { phone, password, chatId, telegramUsername } = req.body as {
+      phone: string;
+      password: string;
+      chatId: string;
+      telegramUsername?: string;
+    };
+
+    const vendor = await authService.linkTelegramVendorAccount({
+      phone,
+      password,
+      chatId,
+      ...(telegramUsername ? { telegramUsername } : {}),
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Venue owner Telegram account linked successfully',
+      data: { vendor },
     });
   } catch (error) {
     return next(error);

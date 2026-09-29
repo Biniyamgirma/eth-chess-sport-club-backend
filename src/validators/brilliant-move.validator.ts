@@ -4,10 +4,6 @@ export const brilliantMoveSubmissionSchema = z.object({
   body: z.object({
     platform: z.string().min(1).optional(),
     move_url: z.string().url().optional(),
-    week_number: z.union([z.string(), z.number()]).optional(),
-    rank: z.union([z.string(), z.number()]).optional(),
-    admin_vote: z.union([z.string(), z.number()]).optional(),
-    is_awarded: z.union([z.string(), z.number()]).optional(),
   }).refine((value) => !!value.move_url || !!value.platform, {
     message: 'move_url or platform is required',
     path: ['move_url'],

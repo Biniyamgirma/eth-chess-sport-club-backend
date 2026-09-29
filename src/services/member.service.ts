@@ -1,5 +1,6 @@
 import { prisma } from '../config/prisma.js';
 import { AppError } from '../middlewares/errorHandler.js';
+import { generateMemberId } from '../utils/member-id.js';
 import { hashPassword } from '../utils/password.js';
 
 const orm = prisma.orm as any;
@@ -62,8 +63,8 @@ export const memberService = {
   },
 
   async registerMember(input: Record<string, any>) {
-    const now = new Date();
-    const memberId = String(input.id ?? `member_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+    
+    const memberId = String(input.id ?? await generateMemberId('U'));
 
     if (!input.phone) {
       throw new AppError('Phone number is required', 400);
@@ -79,7 +80,7 @@ export const memberService = {
     }
 
     const passwordHash = await hashPassword(String(input.password));
-
+    const now = Temporal.Now.instant();
     return orm.public.Member.create({
       id: memberId,
       f_name: input.f_name ?? null,
@@ -88,7 +89,7 @@ export const memberService = {
       phone: String(input.phone),
       telegram_username: input.telegram_username ?? null,
       trophy: input.trophy ?? null,
-      is_member: input.is_member ?? 1,
+      is_member: input.is_member ?? 0,
       member_title: input.member_title ?? null,
       eth_chess_rating: input.eth_chess_rating ?? null,
       password: passwordHash,
@@ -109,7 +110,7 @@ export const memberService = {
 
   async updateMemberProfile(memberId: string, input: Record<string, any>) {
     const member = await ensureMemberExists(memberId);
-    const now = new Date();
+    const now = Temporal.Now.instant();
     const payload: Record<string, any> = {
       ...input,
       updatedAt: now,
@@ -141,10 +142,10 @@ export const memberService = {
 
   async adminUpdateMember(memberId: string, input: Record<string, any>) {
     await ensureMemberExists(memberId);
-
+    const now = Temporal.Now.instant();
     const payload: Record<string, any> = {
       ...input,
-      updatedAt: new Date(),
+      updatedAt: now,
     };
 
     if (input.password) {
@@ -159,11 +160,11 @@ export const memberService = {
 
   async softDeleteMember(memberId: string) {
     await ensureMemberExists(memberId);
-
+    const now = Temporal.Now.instant();
     return orm.public.Member.where({ id: memberId }).update({
       is_deleted: 1,
       status: 0,
-      updatedAt: new Date(),
+      updatedAt: now,
     });
   },
 

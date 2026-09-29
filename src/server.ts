@@ -17,6 +17,8 @@ import subscriptionRoutes from './routes/subscription.routes.js';
 import lookupRoutes from './routes/lookup.routes.js';
 import matchRoutes from './routes/match.routes.js';
 import matchInvoiceRoutes from './routes/match-invoice.routes.js';
+import venueOwnerBotRoutes from './routes/venue-owner-bot.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 
 const app = express();
 
@@ -49,6 +51,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/admins', adminRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/brilliant-moves', brilliantMoveRoutes);
 app.use('/api/venues', venueRoutes);
@@ -58,6 +61,7 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/lookups', lookupRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/match-invoices', matchInvoiceRoutes);
+app.use('/api/venue-owner-bot', venueOwnerBotRoutes);
 
 app.use((_req, _res, next) => {
   next(new Error('Route not found'));

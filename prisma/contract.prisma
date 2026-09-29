@@ -29,8 +29,8 @@ model Admin {
   password   String?   
   status     Int?      
   role       Int
-  created_at DateTime?   
-  updatedAt DateTime?
+  created_at DateTime? 
+  updatedAt  DateTime? 
 
   admin_role        AdminRole    @relation(fields: [role], references: [id])
   approved_invoices Invoice[]
@@ -88,7 +88,8 @@ model Vendor {
   password          String?    
   role              Int?
   phone_number      String?    
-  email             String?    
+  email             String? 
+  chat_id           String?   
   telegram_username String?    
   whats_up_username String?    
      createdAt DateTime 
@@ -302,4 +303,12 @@ model VenueTable {
   matches       MatchHistory[]
 
   @@map("venue_table")
+} 
+model ClubMessage {
+  id           Int       @id @default(autoincrement())
+  content      String?
+
+  createdAt  DateTime
+  updatedAt  DateTime
+  @@map("club_message")
 } 

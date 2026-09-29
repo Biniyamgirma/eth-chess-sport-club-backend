@@ -24,6 +24,15 @@ export const telegramLinkSchema = z.object({
   }),
 });
 
+export const telegramVendorLinkSchema = z.object({
+  body: z.object({
+    phone: z.string().min(5),
+    password: z.string().min(8),
+    chatId: z.union([z.string().min(1), z.number().int()]).transform(String),
+    telegramUsername: z.string().min(1).optional(),
+  }),
+});
+
 export const authLogoutSchema = z.object({
   body: z.object({}).passthrough().optional(),
 });

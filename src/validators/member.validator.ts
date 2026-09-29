@@ -6,7 +6,7 @@ export const memberRegisterSchema = z.object({
     f_name: z.string().min(1).optional(),
     l_name: z.string().min(1).optional(),
     chat_id: z.string().optional(),
-    phone: z.string().min(5),
+    phone: z.string().min(9),
     telegram_username: z.string().optional(),
     trophy: z.string().optional(),
     member_title: z.string().optional(),

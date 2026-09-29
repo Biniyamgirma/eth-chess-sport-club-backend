@@ -19,13 +19,30 @@ export const validate = (schema: z.ZodTypeAny) => {
 
     const data = parsed.data as {
       body?: unknown;
-      query?: unknown;
-      params?: unknown;
+      query?: Record<string, unknown>;
+      params?: Record<string, unknown>;
     };
 
-    req.body = (data.body ?? req.body) as typeof req.body;
-    req.query = (data.query ?? req.query) as typeof req.query;
-    req.params = (data.params ?? req.params) as typeof req.params;
+    // 1. Body can be safely reassigned
+    if (data.body !== undefined) {
+      req.body = data.body;
+    }
+
+    // 2. Safely mutate req.query to avoid the "getter only" TypeError
+    if (data.query !== undefined) {
+      for (const key in req.query) {
+        delete req.query[key];
+      }
+      Object.assign(req.query, data.query);
+    }
+
+    // 3. Safely mutate req.params
+    if (data.params !== undefined) {
+      for (const key in req.params) {
+        delete req.params[key];
+      }
+      Object.assign(req.params, data.params);
+    }
 
     return next();
   };

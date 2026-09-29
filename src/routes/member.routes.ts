@@ -22,9 +22,9 @@ import {
 
 const router = Router();
 
-router.post('/register', validate(memberRegisterSchema), registerMember);
+router.post('/register', validate(memberRegisterSchema), registerMember);// works
 
-router.get('/', requireAuth, requireRole(['admin']), listMembers);
+router.get('/', requireAuth, requireRole(['admin']), listMembers);// works
 router.get('/me', requireAuth, getCurrentMember);
 router.put('/me', requireAuth, validate(memberUpdateSchema), updateCurrentMember);
 router.patch('/me/link-accounts', requireAuth, validate(memberSyncSchema), syncExternalAccounts);

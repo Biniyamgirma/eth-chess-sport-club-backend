@@ -1,15 +1,14 @@
+import { number } from 'zod';
 import { prisma } from '../config/prisma.js';
 import { AppError } from '../middlewares/errorHandler.js';
 
 const orm = prisma.orm as any;
 
 const getCurrentWeekNumber = () => {
-  const now = new Date();
-  const date = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  const day = date.getUTCDay() || 7;
-  date.setUTCDate(date.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  const weekNumber = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  const now = Temporal.Now.instant();
+    const zoned = now.toZonedDateTimeISO('Africa/Addis_Ababa');
+
+const weekNumber = zoned.weekOfYear; 
 
   return weekNumber;
 };
@@ -36,7 +35,7 @@ const enrichSubmission = async (submission: any) => {
 const ensureEligibleMember = async (memberId: string) => {
   const member = await orm.public.Member.where({ id: memberId }).first();
 
-  if (!member || member.is_deleted === 1 || member.is_member !== 1) {
+  if (!member || member.is_deleted === 1) {
     throw new AppError('Only active members can perform this action', 403);
   }
 
@@ -44,19 +43,23 @@ const ensureEligibleMember = async (memberId: string) => {
 };
 
 export const brilliantMoveService = {
+  
   async submitBrilliantMove(memberId: string, input: Record<string, any>) {
     await ensureEligibleMember(memberId);
+    const now = Temporal.Now.instant();
+    const zoned = now.toZonedDateTimeISO('Africa/Addis_Ababa');
 
+const weekNumber = zoned.weekOfYear;   // ISO week number, e.g. 40 
     const payload = {
       user_id: memberId,
       platform: input.platform ?? 'unknown',
       admin_vote: input.admin_vote ?? null,
       move_url: input.move_url ?? null,
-      week_number: input.week_number ? Number(input.week_number) : null,
+      week_number: weekNumber,
       rank: input.rank ? Number(input.rank) : null,
       is_awarded: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     };
 
     return orm.public.BrilliantMoveSubmission.create(payload);
@@ -70,12 +73,12 @@ export const brilliantMoveService = {
     if (submission.user_id !== memberId) {
       throw new AppError('You can only edit your own brilliant move submission', 403);
     }
-
+    const now= Temporal.Now.instant()
     const updated = await orm.public.BrilliantMoveSubmission.where({ id: submissionId }).update({
       platform: input.platform ?? submission.platform,
       move_url: input.move_url ?? submission.move_url,
       week_number: input.week_number !== undefined ? Number(input.week_number) : submission.week_number,
-      updatedAt: new Date(),
+      updatedAt: now,
     });
 
     return enrichSubmission(updated);
@@ -100,11 +103,11 @@ export const brilliantMoveService = {
         throw new AppError('Rank and award updates are only allowed within the same week', 400);
       }
     }
-
+    const now= Temporal.Now.instant()
     const updated = await orm.public.BrilliantMoveSubmission.where({ id: submissionId }).update({
       rank: input.rank !== undefined ? Number(input.rank) : submission.rank,
       is_awarded: input.is_awarded !== undefined ? Number(input.is_awarded) : submission.is_awarded,
-      updatedAt: new Date(),
+      updatedAt: now,
     });
 
     return enrichSubmission(updated);
@@ -132,11 +135,11 @@ export const brilliantMoveService = {
     }
 
     const submission = await this.getSubmissionById(submissionId);
-
+    const now =  Temporal.Now.instant()
     const updated = await orm.public.BrilliantMoveSubmission.where({ id: submission.id }).update({
       admin_vote: vote,
       is_awarded: vote > 0 ? 1 : 0,
-      updatedAt: new Date(),
+      updatedAt: now,
     });
 
     return enrichSubmission(updated);
@@ -159,12 +162,13 @@ export const brilliantMoveService = {
       user_id: memberId,
       submission_id: submissionId,
     }).first();
+        const now =  Temporal.Now.instant()
 
     if (existingVote) {
       return orm.public.Vote.where({ id: existingVote.id }).update({
         vote_type: voteType,
         status: 1,
-        updatedAt: new Date(),
+        updatedAt:now,
       });
     }
 
@@ -173,8 +177,8 @@ export const brilliantMoveService = {
       vote_type: voteType,
       submission_id: submissionId,
       status: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     });
 
     return {

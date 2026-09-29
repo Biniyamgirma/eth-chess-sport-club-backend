@@ -1,5 +1,6 @@
 import { prisma } from '../config/prisma.js';
 import { AppError } from '../middlewares/errorHandler.js';
+import { generateMemberId } from '../utils/member-id.js';
 
 const orm = prisma.orm as any;
 
@@ -108,39 +109,92 @@ export const subscriptionService = {
   },
 
   async confirmPayment(adminId: number, invoiceId: number) {
-    const invoice = await getInvoice(invoiceId);
-    const subscription = await orm.public.MemberSubscription.where({ invoice_id: invoice.id }).first();
+    return prisma.transaction(async (tx: any) => {
+      const txOrm = tx.orm as any;
+      const invoice = await txOrm.public.Invoice.where({ id: invoiceId }).first();
+      if (!invoice) {
+        throw new AppError('Invoice not found', 404);
+      }
 
-    if (!subscription) {
-      throw new AppError('Subscription record not found for invoice', 404);
-    }
-    if (invoice.payment_status === 'confirmed') {
-      throw new AppError('Payment has already been confirmed', 409);
-    }
-    if (!invoice.payment_proof_url) {
-      throw new AppError('Payment proof has not been submitted', 400);
-    }
+      const subscription = await txOrm.public.MemberSubscription.where({ invoice_id: invoice.id }).first();
+      if (!subscription) {
+        throw new AppError('Subscription record not found for invoice', 404);
+      }
+      if (invoice.payment_status === 'confirmed') {
+        throw new AppError('Payment has already been confirmed', 409);
+      }
+      if (!invoice.payment_proof_url) {
+        throw new AppError('Payment proof has not been submitted', 400);
+      }
 
-    const tier = await getTier(subscription.tier_id);
-    const now = new Date();
-    const endDate = tier.duration_days
-      ? new Date(now.getTime() + tier.duration_days * 24 * 60 * 60 * 1000)
-      : null;
+      const tier = await txOrm.public.MembershipTier.where({ id: subscription.tier_id }).first();
+      if (!tier || tier.is_deleted === 1) {
+        throw new AppError('Membership tier not found', 404);
+      }
 
-    const confirmedInvoice = await orm.public.Invoice.where({ id: invoice.id }).update({
-      payment_status: 'confirmed',
-      approved_by: adminId,
-      updatedAt: now,
+      const now = new Date();
+      const endDate = tier.duration_days
+        ? new Date(now.getTime() + tier.duration_days * 24 * 60 * 60 * 1000)
+        : null;
+
+      const confirmedInvoice = await txOrm.public.Invoice.where({ id: invoice.id }).update({
+        payment_status: 'confirmed',
+        approved_by: adminId,
+        updatedAt: now,
+      });
+
+      let member = null;
+      let memberId = subscription.user_id;
+      if (String(tier.name).trim().toLowerCase() === 'ethchess') {
+        const existingMember = await txOrm.public.Member.where({ id: subscription.user_id }).first();
+        if (!existingMember) {
+          throw new AppError('Member not found for subscription', 404);
+        }
+
+        const newMemberId = /^ETH\d+$/.test(existingMember.id)
+          ? existingMember.id
+          : await generateMemberId('ETH', txOrm.public.Member);
+
+        if (newMemberId !== existingMember.id) {
+          member = await txOrm.public.Member.create({
+            ...existingMember,
+            id: newMemberId,
+            updatedAt: now,
+          });
+
+          await txOrm.public.MemberDetails.where({ user_id: existingMember.id }).update({ user_id: newMemberId });
+          await txOrm.public.MemberSubscription.where({ user_id: existingMember.id }).update({ user_id: newMemberId });
+          await txOrm.public.BrilliantMoveSubmission.where({ user_id: existingMember.id }).update({ user_id: newMemberId });
+          await txOrm.public.Vote.where({ user_id: existingMember.id }).update({ user_id: newMemberId });
+          await txOrm.public.MatchHistory.where({ user_id: existingMember.id }).update({ user_id: newMemberId });
+          await txOrm.public.MatchHistory.where({ white_player_id: existingMember.id }).update({ white_player_id: newMemberId });
+          await txOrm.public.MatchHistory.where({ black_player_id: existingMember.id }).update({ black_player_id: newMemberId });
+          await txOrm.public.MatchHistory.where({ winner_id: existingMember.id }).update({ winner_id: newMemberId });
+          await txOrm.public.Invoice.where({ member_id: existingMember.id }).update({
+            member_id: newMemberId,
+            updatedAt: now,
+          });
+          await txOrm.public.VenueTable.where({ ideal_player: existingMember.id }).update({
+            ideal_player: newMemberId,
+            updatedAt: now,
+          });
+          await txOrm.public.Member.where({ id: existingMember.id }).delete();
+          memberId = newMemberId;
+        } else {
+          member = existingMember;
+        }
+      }
+
+      const confirmedSubscription = await txOrm.public.MemberSubscription.where({ id: subscription.id }).update({
+        user_id: memberId,
+        subscription_status: 'active',
+        status: 1,
+        start_date: now,
+        end_date: endDate,
+        updatedAt: now,
+      });
+
+      return { invoice: confirmedInvoice, subscription: confirmedSubscription, ...(member ? { member } : {}) };
     });
-
-    const confirmedSubscription = await orm.public.MemberSubscription.where({ id: subscription.id }).update({
-      subscription_status: 'active',
-      status: 1,
-      start_date: now,
-      end_date: endDate,
-      updatedAt: now,
-    });
-
-    return { invoice: confirmedInvoice, subscription: confirmedSubscription };
   },
 };

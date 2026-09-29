@@ -1,0 +1,83 @@
+[
+  {
+    "id": "table.club_message",
+    "label": "Create table \"club_message\"",
+    "summary": "Creates table \"club_message\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "club_message"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"club_message\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"club_message\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"club_message\"",
+        "sql": "CREATE TABLE \"public\".\"club_message\" (\n  \"content\" text,\n  \"createdAt\" timestamptz NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"club_message\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"club_message\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.vendor.chat_id",
+    "label": "Add column \"chat_id\" to \"vendor\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "chat_id",
+        "table": "vendor"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"chat_id\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "vendor",
+          "chat_id"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"chat_id\"",
+        "sql": "ALTER TABLE \"public\".\"vendor\" ADD COLUMN \"chat_id\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"chat_id\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "vendor",
+          "chat_id"
+        ]
+      }
+    ]
+  }
+]
