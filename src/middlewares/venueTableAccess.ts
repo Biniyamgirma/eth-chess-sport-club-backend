@@ -11,7 +11,7 @@ const hasElevatedAdminAccess = async (req: Request) => {
   }
 
   const admin = await orm.public.Admin.where({ id: Number(req.user.id) }).first();
-  return Boolean(admin && Number(admin.role) > 6);
+  return Boolean(admin && Number(admin.role) > 2);
 };
 
 const findVenueId = async (req: Request) => {

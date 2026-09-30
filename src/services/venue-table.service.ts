@@ -27,26 +27,26 @@ export const venueTableService = {
 
   async createTable(venueId: number, input: Record<string, any>, createdBy?: number) {
     await ensureVenue(venueId);
-
+    const now = Temporal.Now.instant()
     return orm.public.VenueTable.create({
       venue_id: venueId,
       name: input.name ?? null,
       status: input.status ?? 1,
       created_by: createdBy ?? null,
       ideal_player: input.ideal_player ?? null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     });
   },
 
   async updateTable(tableId: number, input: Record<string, any>) {
     await ensureTable(tableId);
-
+    const now = Temporal.Now.instant()
     return orm.public.VenueTable.where({ id: tableId }).update({
       ...(typeof input.name !== 'undefined' ? { name: input.name } : {}),
       ...(typeof input.status !== 'undefined' ? { status: input.status } : {}),
       ...(typeof input.ideal_player !== 'undefined' ? { ideal_player: input.ideal_player } : {}),
-      updatedAt: new Date(),
+      updatedAt: now,
     });
   },
 
@@ -56,10 +56,11 @@ export const venueTableService = {
   },
 
   async setTableStatus(tableId: number, status: number) {
+    const now = Temporal.Now.instant()
     await ensureTable(tableId);
     return orm.public.VenueTable.where({ id: tableId }).update({
       status,
-      updatedAt: new Date(),
+      updatedAt: now,
     });
   },
 };

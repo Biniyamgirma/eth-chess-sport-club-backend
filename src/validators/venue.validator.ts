@@ -32,3 +32,30 @@ export const vendorCreateSchema = z.object({
     whats_up_username: z.string().optional(),
   }),
 });
+
+export const vendorUpdateSchema = z.object({
+  body: z.object({
+    f_name: z.string().min(1).optional(),
+    l_name: z.string().optional(),
+    venue_id: optionalInteger,
+    password: z.string().min(8).optional(),
+    phone_number: z.string().min(5).optional(),
+    email: z.string().email().optional(),
+    telegram_username: z.string().optional(),
+    whats_up_username: z.string().optional(),
+  }),
+});
+
+export const adminVendorUpdateSchema = z.object({
+  body: z.object({
+    f_name: z.string().min(1).optional(),
+    l_name: z.string().optional(),
+    venue_id: optionalInteger,
+    password: z.string().min(8).optional(),
+    role: optionalInteger,
+    phone_number: z.string().min(5).optional(),
+    email: z.string().email().optional(),
+    telegram_username: z.string().optional(),
+    whats_up_username: z.string().optional(),
+  }),
+});

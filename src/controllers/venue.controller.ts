@@ -14,6 +14,7 @@ export const getVenues = async (_req: Request, res: Response, next: NextFunction
 };
 
 export const createVenue = async (req: Request, res: Response, next: NextFunction) => {
+  const now = Temporal.Now.instant()
   try {
     const payload = req.body;
     const venue = await orm.public.Venue.create({
@@ -30,8 +31,8 @@ export const createVenue = async (req: Request, res: Response, next: NextFunctio
       latitude: payload.latitude ?? null,
       status: payload.status ?? 1,
       is_deleted: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     });
 
     return res.status(201).json({ success: true, data: venue });
@@ -44,10 +45,10 @@ export const updateVenue = async (req: Request, res: Response, next: NextFunctio
   try {
     const { id } = req.params;
     const payload = req.body;
-
+    
     const venue = await orm.public.Venue.where({ id: Number(id) }).update({
       ...payload,
-      updatedAt: new Date(),
+      updatedAt: Temporal.Now.instant(),
     });
 
     return res.status(200).json({ success: true, data: venue });

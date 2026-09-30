@@ -12,7 +12,7 @@ export const vendorService = {
         throw new AppError('Venue not found', 404);
       }
     }
-
+    const now = Temporal.Now.instant();
     const password = await hashPassword(String(input.password));
 
     const vendor = await orm.public.Vendor.create({
@@ -25,11 +25,58 @@ export const vendorService = {
       email: input.email ?? null,
       telegram_username: input.telegram_username ?? null,
       whats_up_username: input.whats_up_username ?? null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     });
 
     delete vendor.password;
     return vendor;
   },
+
+  async updateVendor(vendorId: number, input: Record<string, any>) {
+    return updateVendorRecord(vendorId, input, false);
+  },
+
+  async adminUpdateVendor(vendorId: number, input: Record<string, any>) {
+    return updateVendorRecord(vendorId, input, true);
+  },
+};
+
+const updateVendorRecord = async (
+  vendorId: number,
+  input: Record<string, any>,
+  allowRoleUpdate: boolean,
+) => {
+  const vendor = await orm.public.Vendor.where({ id: vendorId }).first();
+  if (!vendor) {
+    throw new AppError('Vendor not found', 404);
+  }
+
+  if (input.venue_id !== undefined && input.venue_id !== null) {
+    const venue = await orm.public.Venue.where({ id: Number(input.venue_id) }).first();
+    if (!venue || venue.is_deleted === 1) {
+      throw new AppError('Venue not found', 404);
+    }
+  }
+
+  const payload: Record<string, any> = {
+    ...input,
+    updatedAt: Temporal.Now.instant(),
+  };
+
+  if (input.password !== undefined) {
+    payload.password = await hashPassword(String(input.password));
+  }
+
+  delete payload.id;
+  delete payload.createdAt;
+  delete payload.chat_id;
+
+  if (!allowRoleUpdate) {
+    delete payload.role;
+  }
+
+  const updatedVendor = await orm.public.Vendor.where({ id: vendorId }).update(payload);
+  delete updatedVendor.password;
+  return updatedVendor;
 };
