@@ -11,18 +11,20 @@ const tableIdParam = z.object({
 export const matchStartSchema = z.object({
   params: tableIdParam,
   body: z.object({
-    pricing_method: z.string().optional(),
-    status: z.string().optional(),
-    chat_id: z.number().int().optional(),
-    log_details: z.record(z.string(), z.unknown()).optional(),
-  }),
+    color: z.enum(['white', 'black']).optional(),
+  }).strict(),
+});
+
+export const leaveMatchTableSchema = z.object({
+  params: tableIdParam,
+  body: z.object({}).strict(),
 });
 
 export const matchEndSchema = z.object({
   params: idParam,
   body: z.object({
     loser_user_id: z.string().min(1),
-  }),
+  }).strict(),
 });
 
 export const matchConfirmLoserSchema = z.object({
@@ -37,7 +39,19 @@ const telegramChatId = z.union([z.string().min(1), z.number().int()]).transform(
 
 export const telegramBotJoinSchema = z.object({
   params: tableIdParam,
-  body: z.object({ chat_id: telegramChatId }),
+  body: z.object({
+    chat_id: telegramChatId,
+    color: z.enum(['white', 'black']).optional(),
+  }).strict(),
+});
+
+export const telegramBotAccountSchema = z.object({
+  body: z.object({ chat_id: telegramChatId }).strict(),
+});
+
+export const telegramBotLeaveSchema = z.object({
+  params: tableIdParam,
+  body: z.object({ chat_id: telegramChatId }).strict(),
 });
 
 export const telegramBotMatchSchema = z.object({
@@ -50,7 +64,7 @@ export const telegramBotEndSchema = z.object({
   body: z.object({
     chat_id: telegramChatId,
     loser: z.enum(['self', 'opponent']),
-  }),
+  }).strict(),
 });
 
 export const telegramBotConfirmSchema = z.object({
@@ -58,5 +72,5 @@ export const telegramBotConfirmSchema = z.object({
   body: z.object({
     chat_id: telegramChatId,
     token: z.string().min(1),
-  }),
+  }).strict(),
 });

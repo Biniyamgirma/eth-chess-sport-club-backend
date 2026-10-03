@@ -23,6 +23,7 @@ import {
 const router = Router();
 
 router.use(requireAuth);
+// const addisAbabaTime = now.toZonedDateTimeISO('Africa/Addis_Ababa');
 
 router.get('/tiers', listMembershipTiers);
 router.post('/tiers', requireAdminLevel(6), validate(membershipTierCreateSchema), createMembershipTier);

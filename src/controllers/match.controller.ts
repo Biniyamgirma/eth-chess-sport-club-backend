@@ -13,6 +13,15 @@ export const listMatchVenues = async (_req: Request, res: Response, next: NextFu
   }
 };
 
+export const getTelegramMatchAccount = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const account = await matchService.getTelegramAccount(req.body.chat_id);
+    return res.status(200).json({ success: true, data: account });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const listMatchTables = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tables = await matchService.listAvailableTables(Number(req.params.venueId));
@@ -26,6 +35,18 @@ export const joinMatchTable = async (req: Request, res: Response, next: NextFunc
   try {
     const result = await matchService.joinTable(String(req.user?.id), Number(req.params.tableId), req.body);
     return res.status(result.state === 'match_started' ? 201 : 200).json({ success: true, data: result });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const leaveMatchTable = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await matchService.leaveWaitingTable(
+      String(req.user?.id),
+      Number(req.params.tableId),
+    );
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
     return next(error);
   }
@@ -81,8 +102,21 @@ export const joinMatchTableForTelegram = async (req: Request, res: Response, nex
     const result = await matchService.joinTableForTelegram(
       req.body.chat_id,
       Number(req.params.tableId),
+      req.body.color,
     );
     return res.status(result.state === 'match_pending_start' ? 201 : 200).json({ success: true, data: result });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const leaveMatchTableForTelegram = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await matchService.leaveWaitingTableForTelegram(
+      req.body.chat_id,
+      Number(req.params.tableId),
+    );
+    return res.status(200).json({ success: true, data: result });
   } catch (error) {
     return next(error);
   }

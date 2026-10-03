@@ -135,7 +135,7 @@ export const venueOwnerBotService = {
       throw new AppError('One of these players is already in an active match', 409);
     }
 
-    const now = new Date();
+    const now = Temporal.Now.instant();
     const match = await orm.public.MatchHistory.create({
       user_id: null,
       started_at: now,
@@ -178,13 +178,15 @@ export const venueOwnerBotService = {
     }
     await getOwnedVenue(Number(vendor.id), Number(match.venue_id));
 
-    const now = new Date();
+    const now = Temporal.Now.instant();
     const details = typeof match.log_details === 'object' && match.log_details !== null
       ? match.log_details
       : {};
-    const duration = match.started_at
-      ? Math.max(1, Math.ceil((now.getTime() - new Date(match.started_at).getTime()) / 60000))
-      : null;
+      const  matchEndAt = Temporal.Now.instant();
+    const duration =  Math.max(
+  1,
+  Math.ceil(matchEndAt.since(match.started_at).total({ unit: "minutes" })),
+);
     const cancelledMatch = await orm.public.MatchHistory.where({ id: match.id }).update({
       game_end_at: now,
       time_in_min: duration,
@@ -193,7 +195,7 @@ export const venueOwnerBotService = {
       log_details: {
         ...details,
         cancelled_by_vendor_id: vendor.id,
-        cancelled_at: now.toISOString(),
+        cancelled_at: now,
       },
       updatedAt: now,
     });

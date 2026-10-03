@@ -65,7 +65,35 @@ const withPlayerDetails = async (match: any) => {
   };
 };
 
+const ensureMemberCanJoin = async (memberId: string, allowedWaitingTableId?: number) => {
+  const [whiteMatch, blackMatch, waitingTables] = await Promise.all([
+    orm.public.MatchHistory.where({ white_player_id: memberId, game_end_at: null }).first(),
+    orm.public.MatchHistory.where({ black_player_id: memberId, game_end_at: null }).first(),
+    orm.public.VenueTable.where({ ideal_player: memberId }).all(),
+  ]);
+
+  if (whiteMatch || blackMatch) {
+    throw new AppError('You are already in an active match', 409);
+  }
+
+  if (waitingTables.some((waitingTable: any) => Number(waitingTable.id) !== allowedWaitingTableId)) {
+    throw new AppError('You are already waiting at another table', 409);
+  }
+};
+
 export const matchService = {
+  async getTelegramAccount(chatId: string) {
+    const member = await orm.public.Member.where({ chat_id: chatId }).first();
+    if (!member || member.is_deleted === 1) {
+      return { linked: false };
+    }
+
+    return {
+      linked: true,
+      member: { id: member.id, name: memberName(member) },
+    };
+  },
+
   async listAvailableVenues() {
     return orm.public.Venue.where({ status: 1, is_deleted: 0 }).all();
   },
@@ -82,7 +110,11 @@ export const matchService = {
     }));
   },
 
-  async joinTable(memberId: string, tableId: number, input: Record<string, any>) {
+  async joinTable(
+    memberId: string,
+    tableId: number,
+    input: { pending_start?: boolean; color?: 'white' | 'black' },
+  ) {
     const member = await getMember(memberId);
     const { table, venue } = await getTable(tableId);
 
@@ -91,31 +123,37 @@ export const matchService = {
       throw new AppError('This table already has an active match', 409);
     }
 
+    await ensureMemberCanJoin(memberId, table.ideal_player === memberId ? table.id : undefined);
+
     if (table.ideal_player && String(table.ideal_player) !== memberId) {
       const waitingMember = await getMember(String(table.ideal_player));
-      const now = new Date();
+      await ensureMemberCanJoin(String(waitingMember.id), table.id);
+      const now = Temporal.Now.instant();
       const pendingStart = input.pending_start === true;
+      const joiningPlayerColor = input.color;
+      const whitePlayer = joiningPlayerColor === 'black' ? waitingMember : member;
+      const blackPlayer = joiningPlayerColor === 'black' ? member : waitingMember;
       const match = await orm.public.MatchHistory.create({
         user_id: null,
         started_at: pendingStart ? null : now,
         game_end_at: null,
         time_in_min: null,
         price_per_min: venue.price_per_min ?? 0,
-        white_player_id: waitingMember.id,
-        black_player_id: member.id,
+        white_player_id: whitePlayer.id,
+        black_player_id: blackPlayer.id,
         winner_id: null,
         venue_id: venue.id,
         is_loser_approved: 0,
         table_id: table.id,
-        pricing_method: input.pricing_method ?? venue.pricing_method ?? null,
-        status: pendingStart ? 'pending_start' : input.status ?? 'started',
+        pricing_method: venue.pricing_method ?? null,
+        status: pendingStart ? 'pending_start' : 'started',
         commission_percent: venue.commission,
         commission_amount: null,
         cancellation_reason: null,
         venue_fee: null,
-        chat_id: input.chat_id ?? null,
+        chat_id: null,
         is_club_paid: 0,
-        log_details: input.log_details ?? null,
+        log_details: null,
         createdAt: now,
         updatedAt: now,
       });
@@ -144,7 +182,7 @@ export const matchService = {
 
     await orm.public.VenueTable.where({ id: table.id }).update({
       ideal_player: member.id,
-      updatedAt: new Date(),
+      updatedAt: Temporal.Now.instant(),
     });
 
     return {
@@ -154,9 +192,35 @@ export const matchService = {
     };
   },
 
-  async joinTableForTelegram(chatId: string, tableId: number) {
+  async leaveWaitingTable(memberId: string, tableId: number) {
+    const member = await getMember(memberId);
+    const table = await orm.public.VenueTable.where({ id: tableId }).first();
+    if (!table) {
+      throw new AppError('Venue table not found', 404);
+    }
+    if (String(table.ideal_player) !== String(member.id)) {
+      throw new AppError('You are not waiting at this table', 409);
+    }
+
+    const now = Temporal.Now.instant();
+    await orm.public.VenueTable.where({ id: table.id, ideal_player: member.id }).update({
+      ideal_player: null,
+      updatedAt: now,
+    });
+
+    return {
+      state: 'left_waiting_list',
+      message: `${memberName(member)} left the waiting list.`,
+      tableId: table.id,
+    };
+  },
+
+  async joinTableForTelegram(chatId: string, tableId: number, color?: 'white' | 'black') {
     const member = await getMemberByChatId(chatId);
-    const result = await matchService.joinTable(member.id, tableId, { pending_start: true });
+    const result = await matchService.joinTable(member.id, tableId, {
+      pending_start: true,
+      ...(color ? { color } : {}),
+    });
     if (result.state !== 'match_pending_start' || !result.match) {
       return result;
     }
@@ -171,6 +235,11 @@ export const matchService = {
       opponent_first_name: memberFirstName(opponent),
       notify_chat_id: opponent.chat_id,
     };
+  },
+
+  async leaveWaitingTableForTelegram(chatId: string, tableId: number) {
+    const member = await getMemberByChatId(chatId);
+    return matchService.leaveWaitingTable(String(member.id), tableId);
   },
 
   async startMatch(memberId: string, matchId: number) {
@@ -192,7 +261,7 @@ export const matchService = {
       throw new AppError('This match is not waiting to start', 409);
     }
 
-    const startedAt = new Date();
+    const startedAt = Temporal.Now.instant();
     const startedMatch = await orm.public.MatchHistory.where({ id: match.id }).update({
       started_at: startedAt,
       status: 'started',
@@ -247,7 +316,7 @@ export const matchService = {
         loser_confirmation_token: token,
         end_requested_by: member.id,
       },
-      updatedAt: new Date(),
+      updatedAt: Temporal.Now.instant(),
     });
 
     const telegramSent = await sendTelegramLoserConfirmation(loser, match.id, token);
@@ -255,7 +324,7 @@ export const matchService = {
       await orm.public.MatchHistory.where({ id: match.id }).update({
         status: 'started',
         log_details: details,
-        updatedAt: new Date(),
+        updatedAt: Temporal.Now.instant(),
       });
       throw new AppError('Could not send loser confirmation to the opponent', 503);
     }
@@ -337,7 +406,7 @@ const sendTelegramLoserConfirmation = async (member: any, matchId: number, token
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: member.chat_id,
-      text: 'Please confirm that you are the loser of this match.',
+      text: 'Please confirm that you Lost a match by clicking the button below. If you did not lose, please ignore this message.',
       reply_markup: {
         inline_keyboard: [[{
           text: 'Confirm I am the loser',
@@ -360,11 +429,11 @@ const finalizeMatch = async (match: any, loser: any) => {
 
   const winner = await getMember(String(winnerId));
   const venue = await getVenue(Number(match.venue_id));
-  const endedAt = new Date();
+  const endedAt = Temporal.Now.instant();
   const elapsedMinutes = Math.max(
-    1,
-    Math.ceil((endedAt.getTime() - new Date(match.started_at).getTime()) / 60000),
-  );
+  1,
+  Math.ceil(endedAt.since(match.started_at).total({ unit: "minutes" })),
+);
   const pricePerMinute = Number(match.price_per_min ?? venue.price_per_min ?? 0);
   const venueFee = elapsedMinutes * pricePerMinute;
   const commissionPercent = Number(match.commission_percent ?? venue.commission ?? 0);

@@ -170,7 +170,7 @@ export const memberService = {
 
   async syncExternalProfiles(memberId: string, input: Record<string, any>) {
     const member = await ensureMemberExists(memberId);
-    const now = new Date();
+    const now = Temporal.Now.instant();
 
     const existingDetails = await orm.public.MemberDetails.where({ user_id: memberId }).first();
     const updatePayload: Record<string, any> = {

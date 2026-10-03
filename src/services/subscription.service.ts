@@ -25,65 +25,77 @@ const getInvoice = async (invoiceId: number) => {
 export const subscriptionService = {
   async listTiers(includeDeleted = false) {
     const tiers = await orm.public.MembershipTier.all();
-    return includeDeleted ? tiers : tiers.filter((tier: any) => tier.is_deleted !== 1);
+    const filteredTiers = includeDeleted ? {...tiers,updatedAt: tiers.updatedAt.toZonedDateTimeISO('Africa/Addis_Ababa')} : tiers.filter((tier: any) => tier.is_deleted !== 1);
+    return filteredTiers;
   },
 
   async createTier(input: { name: string; price: number; duration_days?: number }) {
+    const existingTier = await orm.public.MembershipTier.where({ name: input.name }).first();
+    if (existingTier) {
+      throw new AppError('Membership tier with this name already exists', 409);
+    }
+    const now = Temporal.Now.instant();
     return orm.public.MembershipTier.create({
       name: input.name,
       price: input.price,
       duration_days: input.duration_days ?? null,
-      is_deleted: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     });
   },
 
   async updateTier(tierId: number, input: Record<string, any>) {
     await getTier(tierId, true);
+    const now = Temporal.Now.instant();
     return orm.public.MembershipTier.where({ id: tierId }).update({
       ...(typeof input.name !== 'undefined' ? { name: input.name } : {}),
       ...(typeof input.price !== 'undefined' ? { price: input.price } : {}),
       ...(typeof input.duration_days !== 'undefined' ? { duration_days: input.duration_days } : {}),
-      updatedAt: new Date(),
+      updatedAt: now,
     });
   },
 
   async softDeleteTier(tierId: number) {
     await getTier(tierId);
+    const now = Temporal.Now.instant();
     return orm.public.MembershipTier.where({ id: tierId }).update({
-      is_deleted: 1,
-      updatedAt: new Date(),
+      // is_deleted: 1,
+      updatedAt: now,
     });
   },
 
   async createInvoice(memberId: string, tierId: number, paymentMethod?: string) {
     const tier = await getTier(tierId);
-    const now = new Date();
+    const now = Temporal.Now.instant();
 
-    return orm.public.Invoice.create({
-      payment_type: 'membership',
-      paid_in_date: null,
-      total_min: tier.price,
-      paid_in_amount: 0,
-      payment_status: 'pending',
-      payment_method: paymentMethod ?? null,
-      payment_proof_url: null,
-      approved_by: null,
-      createdAt: now,
-      updatedAt: now,
-      subscriptions: {
-        create: {
-          user_id: memberId,
-          tier_id: tier.id,
-          start_date: null,
-          end_date: null,
-          subscription_status: 'pending_payment',
-          status: 0,
-          createdAt: now,
-          updatedAt: now,
-        },
-      },
+    return prisma.transaction(async (tx: any) => {
+      const txOrm = tx.orm as any;
+      const invoice = await txOrm.public.Invoice.create({
+        payment_type: 'membership',
+        paid_in_date: null,
+        total_min: tier.price,
+        paid_in_amount: 0,
+        payment_status: 'pending',
+        payment_method: paymentMethod ?? null,
+        payment_proof_url: null,
+        approved_by: null,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      const subscription = await txOrm.public.MemberSubscription.create({
+        user_id: memberId,
+        tier_id: tier.id,
+        invoice_id: invoice.id,
+        start_date: null,
+        end_date: null,
+        subscription_status: 'pending_payment',
+        status: 0,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      return { ...invoice, subscriptions: [subscription] };
     });
   },
 
@@ -103,12 +115,13 @@ export const subscriptionService = {
       paid_in_amount: input.paid_in_amount ?? invoice.total_min,
       payment_method: input.payment_method ?? invoice.payment_method ?? null,
       payment_status: 'proof_submitted',
-      paid_in_date: new Date(),
-      updatedAt: new Date(),
+      paid_in_date: Temporal.Now.instant(),
+      updatedAt: Temporal.Now.instant(),
     });
   },
 
   async confirmPayment(adminId: number, invoiceId: number) {
+    
     return prisma.transaction(async (tx: any) => {
       const txOrm = tx.orm as any;
       const invoice = await txOrm.public.Invoice.where({ id: invoiceId }).first();
@@ -128,14 +141,14 @@ export const subscriptionService = {
       }
 
       const tier = await txOrm.public.MembershipTier.where({ id: subscription.tier_id }).first();
-      if (!tier || tier.is_deleted === 1) {
-        throw new AppError('Membership tier not found', 404);
-      }
+      // if (!tier || tier.is_deleted === 1) {
+      //   throw new AppError('Membership tier not found', 404);
+      // }
 
-      const now = new Date();
-      const endDate = tier.duration_days
-        ? new Date(now.getTime() + tier.duration_days * 24 * 60 * 60 * 1000)
-        : null;
+      const now = Temporal.Now.instant();
+      const endDate= now.add({ 
+  hours: (tier.duration_days * 24),
+});
 
       const confirmedInvoice = await txOrm.public.Invoice.where({ id: invoice.id }).update({
         payment_status: 'confirmed',

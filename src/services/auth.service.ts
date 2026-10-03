@@ -93,7 +93,7 @@ export const authService = {
     const updatedMember = await orm.public.Member.where({ id: member.id }).update({
       chat_id: payload.chatId,
       telegram_username: payload.telegramUsername ?? member.telegram_username ?? null,
-      updatedAt: new Date(),
+      updatedAt: Temporal.Now.instant(),
     });
 
     return {
@@ -130,7 +130,7 @@ export const authService = {
     const updatedVendor = await orm.public.Vendor.where({ id: vendor.id }).update({
       chat_id: payload.chatId,
       telegram_username: payload.telegramUsername ?? vendor.telegram_username ?? null,
-      updatedAt: new Date(),
+      updatedAt: Temporal.Now.instant(),
     });
 
     return {

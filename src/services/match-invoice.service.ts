@@ -72,7 +72,7 @@ export const matchInvoiceService = {
     }
 
     const totalCents = matches.reduce((sum: number, match: any) => sum + Number(match.venue_fee ?? 0), 0);
-    const now = new Date();
+    const now = Temporal.Now.instant();
     const invoice = await orm.public.Invoice.create({
       payment_type: 'match',
       paid_in_date: null,
@@ -105,7 +105,7 @@ export const matchInvoiceService = {
       }
     }
 
-    const now = new Date();
+    const now = Temporal.Now.instant();
     const updatedInvoice = await orm.public.Invoice.where({ id: invoice.id }).update({
       payment_status: status,
       paid_in_date: status === 'paid' ? now : null,
