@@ -45,11 +45,9 @@ export const requireLinkedTelegramMember = async (
   }
 
   try {
-    console.log('requireLinkedTelegramMember: looking for member with chat_id', chatId);
     const member = await orm.public.Member.where({ chat_id: chatId }).first();
-    console.log('requireLinkedTelegramMember: found member', member);
     if (!member || member.is_deleted === 1) {
-      return next(new AppError('Authentication required 001', 401));
+      return next(new AppError('Authentication required', 401));
     }
 
     req.member = member;

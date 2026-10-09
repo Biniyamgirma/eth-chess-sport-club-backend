@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const telegramChatId = z.string().regex(/^-?\d{1,20}$/);
+
 export const brilliantMoveSubmissionSchema = z.object({
   body: z.object({
     platform: z.string().min(1).optional(),
@@ -8,6 +10,27 @@ export const brilliantMoveSubmissionSchema = z.object({
     message: 'move_url or platform is required',
     path: ['move_url'],
   }),
+});
+
+export const telegramBrilliantMoveSubmissionSchema = z.object({
+  body: z.object({
+    chat_id: telegramChatId,
+     move_url: z.string().trim().min(1).max(2048).url()
+}) });
+
+export const telegramBrilliantMoveRequestSchema = z.object({
+  body: z.object({
+    chat_id: telegramChatId,
+  }).strict(),
+});
+
+export const telegramBrilliantMoveIdSchema = z.object({
+  params: z.object({
+    id: z.coerce.number().int().positive(),
+  }),
+  body: z.object({
+    chat_id: telegramChatId,
+  }).strict(),
 });
 
 export const brilliantMoveVoteSchema = z.object({

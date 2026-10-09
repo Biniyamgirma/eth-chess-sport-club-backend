@@ -4,6 +4,7 @@ import {
   adminUpdateMember,
   getCurrentMember,
   getMember,
+  getTelegramMemberProfile,
   listMembers,
   registerMember,
   registerTelegramMember,
@@ -13,13 +14,17 @@ import {
 } from '../controllers/member.controller.js';
 import { requireAuth } from '../middlewares/auth.js';
 import { requireRole } from '../middlewares/rbac.js';
-import { requireTelegramBot } from '../middlewares/telegramBotAuth.js';
+import {
+  requireLinkedTelegramMember,
+  requireTelegramBot,
+} from '../middlewares/telegramBotAuth.js';
 import { validate } from '../middlewares/validate.js';
 import {
   adminMemberUpdateSchema,
   memberRegisterSchema,
   memberSyncSchema,
   memberUpdateSchema,
+  telegramMemberProfileSchema,
   telegramMemberRegisterSchema,
 } from '../validators/member.validator.js';
 
@@ -31,6 +36,13 @@ router.post(
   requireTelegramBot,
   validate(telegramMemberRegisterSchema),
   registerTelegramMember,
+);
+router.post(
+  '/bot/profile',
+  requireTelegramBot,
+  validate(telegramMemberProfileSchema),
+  requireLinkedTelegramMember,
+  getTelegramMemberProfile,
 );
 
 router.get('/', requireAuth, requireRole(['admin']), listMembers);// works

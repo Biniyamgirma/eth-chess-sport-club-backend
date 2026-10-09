@@ -16,6 +16,64 @@ export const submitBrilliantMove = async (req: Request, res: Response, next: Nex
   }
 };
 
+export const submitBrilliantMoveFromTelegram = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.member) {
+      throw new AppError('Authentication required', 401);
+    }
+
+    const submission = await brilliantMoveService.submitBrilliantMove(
+      req.member.id,
+      { move_url: req.body.move_url },
+    );
+    return res.status(201).json({ success: true, data: submission });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const listBrilliantMovesForTelegram = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.member) {
+      throw new AppError('Authentication required', 401);
+    }
+
+    const submissions = await brilliantMoveService.listCurrentWeekSubmissions(req.member.id);
+    return res.status(200).json({ success: true, data: submissions });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const voteOnBrilliantMoveFromTelegram = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.member) {
+      throw new AppError('Authentication required', 401);
+    }
+
+    const vote = await brilliantMoveService.voteOnSubmission(
+      req.member.id,
+      Number(req.params.id),
+      'upvote',
+    );
+    return res.status(200).json({ success: true, data: vote });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const editBrilliantMoveSubmission = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {

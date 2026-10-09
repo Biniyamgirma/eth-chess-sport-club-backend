@@ -44,6 +44,29 @@ export const registerTelegramMember = async (req: Request, res: Response, next: 
   }
 };
 
+export const getTelegramMemberProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.member) {
+      throw new AppError('Authentication required', 401);
+    }
+
+    const profile = await memberService.getTelegramProfile(req.member.id);
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...profile,
+        createdAt: formatAddisTime(profile.createdAt),
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const listMembers = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const members = await memberService.listMembers();

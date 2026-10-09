@@ -33,6 +33,12 @@ export const telegramMemberRegisterSchema = z.object({
   }).strict(),
 });
 
+export const telegramMemberProfileSchema = z.object({
+  body: z.object({
+    chat_id: z.string().regex(/^-?\d{1,20}$/),
+  }).strict(),
+});
+
 export const memberUpdateSchema = z.object({
   body: z.object({
     f_name: z.string().min(1).optional(),

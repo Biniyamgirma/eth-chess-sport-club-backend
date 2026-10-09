@@ -141,6 +141,38 @@ export const memberService = {
     return ensureMemberExists(memberId);
   },
 
+  async getTelegramProfile(memberId: string) {
+    const member = await ensureMemberExists(memberId);
+    const [district, details] = await Promise.all([
+      member.district
+        ? orm.public.District.where({ id: member.district }).first()
+        : Promise.resolve(null),
+      orm.public.MemberDetails.where({ user_id: member.id }).first(),
+    ]);
+
+    return {
+      full_name: `${member.f_name ?? ''} ${member.l_name ?? ''}`.trim() || null,
+      district_name: district?.name ?? null,
+      address: member.address ?? null,
+      phone: member.phone,
+      createdAt: member.createdAt,
+      telegram_username: member.telegram_username ?? null,
+      chess_dot_com_username: details?.chess_dot_com_username ?? null,
+      chess_dot_com_ratings: {
+        bullet: details?.chess_dot_com_bullet_rating ?? null,
+        blitz: details?.chess_dot_com_blitz_rating ?? null,
+        rapid: details?.chess_dot_com_rapid_rating ?? null,
+      },
+      lichess_username: details?.lichess_username ?? null,
+      lichess_ratings: {
+        bullet: details?.lichess_bullet_rating ?? null,
+        blitz: details?.lichess_blitz_rating ?? null,
+        rapid: details?.lichess_rapid_rating ?? null,
+        classical: details?.lichess_classical_rating ?? null,
+      },
+    };
+  },
+
   async updateMemberProfile(memberId: string, input: Record<string, any>) {
     const member = await ensureMemberExists(memberId);
     const now = Temporal.Now.instant();
