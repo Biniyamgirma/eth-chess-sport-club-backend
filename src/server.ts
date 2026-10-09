@@ -21,7 +21,11 @@ import venueOwnerBotRoutes from './routes/venue-owner-bot.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 
 const app = express();
-
+console.log(`Starting server in ${env.NODE_ENV} mode on port ${env.PORT}`);
+app.use((req, _res, next) => {
+  console.log(`[REQ] ${req.method} ${req.originalUrl}`);
+  next();
+});
 app.use(
   cors({
     origin: true,
@@ -49,16 +53,16 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-
+// source .venv/Scripts/activate
 app.use('/api/auth', authRoutes);
 app.use('/api/admins', adminRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/brilliant-moves', brilliantMoveRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/vendors', vendorRoutes);
-app.use('/api', venueTableRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/lookups', lookupRoutes);
+app.use('/api', venueTableRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/match-invoices', matchInvoiceRoutes);
 app.use('/api/venue-owner-bot', venueOwnerBotRoutes);

@@ -28,6 +28,22 @@ export const registerMember = async (req: Request, res: Response, next: NextFunc
   }
 };
 
+export const registerTelegramMember = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const member = await memberService.registerTelegramMember(req.body);
+    return res.status(201).json({
+      success: true,
+      data: {
+        id: member.id,
+        name: `${member.f_name ?? ''} ${member.l_name ?? ''}`.trim(),
+        phone: member.phone,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const listMembers = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const members = await memberService.listMembers();

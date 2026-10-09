@@ -877,6 +877,13 @@
                   "kind": "scalar"
                 }
               },
+              "ideal_player_color": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "invoice_id": {
                 "nullable": true,
                 "type": {
@@ -1145,6 +1152,9 @@
                 },
                 "id": {
                   "column": "id"
+                },
+                "ideal_player_color": {
+                  "column": "ideal_player_color"
                 },
                 "invoice_id": {
                   "column": "invoice_id"
@@ -2486,6 +2496,13 @@
                   "kind": "scalar"
                 }
               },
+              "ideal_player_color": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "name": {
                 "nullable": true,
                 "type": {
@@ -2577,6 +2594,9 @@
                 },
                 "ideal_player": {
                   "column": "ideal_player"
+                },
+                "ideal_player_color": {
+                  "column": "ideal_player_color"
                 },
                 "name": {
                   "column": "name"
@@ -3178,6 +3198,11 @@
                   },
                   "nativeType": "int4",
                   "nullable": false
+                },
+                "ideal_player_color": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
                 },
                 "invoice_id": {
                   "codecId": "pg/int4@1",
@@ -3872,6 +3897,11 @@
                   "columns": [
                     "id"
                   ]
+                },
+                {
+                  "columns": [
+                    "chat_id"
+                  ]
                 }
               ]
             },
@@ -4253,6 +4283,11 @@
                   "nativeType": "text",
                   "nullable": true
                 },
+                "ideal_player_color": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "name": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -4440,7 +4475,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "fc02c4d73933378209a38092c50f4674cd0bdb3a19e95b568c61fb5f114137dd"
+    "storageHash": "aa7efb013e57f422c972013eb145cb4934ecb241c5a57b9b448ce941ab43541e"
   },
   "capabilities": {
     "postgres": {

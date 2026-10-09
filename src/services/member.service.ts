@@ -104,6 +104,39 @@ export const memberService = {
     });
   },
 
+  async registerTelegramMember(input: {
+    chat_id: string;
+    f_name: string;
+    l_name?: string;
+    phone: string;
+    password: string;
+    telegram_username?: string;
+    address: string;
+    district: number;
+  }) {
+    const [existingPhone, existingChat, district] = await Promise.all([
+      orm.public.Member.where({ phone: input.phone }).first(),
+      orm.public.Member.where({ chat_id: input.chat_id }).first(),
+      orm.public.District.where({ id: input.district, status: 1 }).first(),
+    ]);
+    if (existingPhone) {
+      throw new AppError('An account with this phone number already exists. Please log in instead.', 409);
+    }
+    if (existingChat) {
+      throw new AppError('This Telegram account is already linked to an EthChess account.', 409);
+    }
+    if (!district) {
+      throw new AppError('Choose an active district to register.', 400);
+    }
+
+    return memberService.registerMember({
+      ...input,
+      role: 'member',
+      status: 1,
+      is_member: 0,
+    });
+  },
+
   async getMemberById(memberId: string) {
     return ensureMemberExists(memberId);
   },

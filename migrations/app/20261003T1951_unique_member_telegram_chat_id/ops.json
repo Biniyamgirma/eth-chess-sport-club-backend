@@ -1,0 +1,44 @@
+[
+  {
+    "id": "unique.members.members_chat_id_key",
+    "label": "Add unique constraint on \"members\" (chat_id)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "members_chat_id_key",
+        "table": "members"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"members_chat_id_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "members_chat_id_key",
+          "public",
+          "\"public\".\"members\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"members_chat_id_key\"",
+        "sql": "ALTER TABLE \"public\".\"members\" ADD CONSTRAINT \"members_chat_id_key\" UNIQUE (\"chat_id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"members_chat_id_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "members_chat_id_key",
+          "public",
+          "\"public\".\"members\""
+        ]
+      }
+    ]
+  }
+]

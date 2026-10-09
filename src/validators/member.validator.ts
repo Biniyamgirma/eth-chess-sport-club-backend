@@ -20,6 +20,19 @@ export const memberRegisterSchema = z.object({
   }),
 });
 
+export const telegramMemberRegisterSchema = z.object({
+  body: z.object({
+    chat_id: z.string().regex(/^-?\d{1,20}$/),
+    f_name: z.string().trim().min(1).max(80),
+    l_name: z.string().trim().max(80).optional(),
+    phone: z.string().regex(/^09\d{8}$/),
+    password: z.string().min(8).max(128),
+    telegram_username: z.string().regex(/^@?[A-Za-z0-9_]{4,32}$/).optional(),
+    address: z.string().trim().min(1).max(200),
+    district: z.number().int().positive(),
+  }).strict(),
+});
+
 export const memberUpdateSchema = z.object({
   body: z.object({
     f_name: z.string().min(1).optional(),

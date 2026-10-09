@@ -5,3 +5,11 @@
 /.devin
 /dist
 /node_modules
+/bot
+!/bot/
+/bot/*
+!/bot/members_bot/
+/bot/members_bot/*
+!/bot/members_bot/python/
+/bot/members_bot/python/*
+!/bot/members_bot/python/ethchess_bot.py

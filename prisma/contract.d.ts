@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'fc02c4d73933378209a38092c50f4674cd0bdb3a19e95b568c61fb5f114137dd'>;
+  StorageHashBase<'aa7efb013e57f422c972013eb145cb4934ecb241c5a57b9b448ce941ab43541e'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
@@ -323,6 +323,7 @@ export type FieldOutputTypes = {
       readonly is_club_paid: CodecTypes['pg/int4@1']['output'] | null;
       readonly invoice_id: CodecTypes['pg/int4@1']['output'] | null;
       readonly log_details: CodecTypes['pg/json@1']['output'] | null;
+      readonly ideal_player_color: CodecTypes['pg/text@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -428,6 +429,7 @@ export type FieldOutputTypes = {
       readonly status: CodecTypes['pg/int4@1']['output'] | null;
       readonly created_by: CodecTypes['pg/int4@1']['output'] | null;
       readonly ideal_player: CodecTypes['pg/text@1']['output'] | null;
+      readonly ideal_player_color: CodecTypes['pg/text@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -526,6 +528,7 @@ export type FieldInputTypes = {
       readonly is_club_paid: CodecTypes['pg/int4@1']['input'] | null;
       readonly invoice_id: CodecTypes['pg/int4@1']['input'] | null;
       readonly log_details: CodecTypes['pg/json@1']['input'] | null;
+      readonly ideal_player_color: CodecTypes['pg/text@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -631,6 +634,7 @@ export type FieldInputTypes = {
       readonly status: CodecTypes['pg/int4@1']['input'] | null;
       readonly created_by: CodecTypes['pg/int4@1']['input'] | null;
       readonly ideal_player: CodecTypes['pg/text@1']['input'] | null;
+      readonly ideal_player_color: CodecTypes['pg/text@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -715,6 +719,7 @@ export type StorageColumnTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly game_end_at: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
       readonly id: CodecTypes['pg/int4@1']['output'];
+      readonly ideal_player_color: CodecTypes['pg/text@1']['output'] | null;
       readonly invoice_id: CodecTypes['pg/int4@1']['output'] | null;
       readonly is_club_paid: CodecTypes['pg/int4@1']['output'] | null;
       readonly is_loser_approved: CodecTypes['pg/int4@1']['output'] | null;
@@ -832,6 +837,7 @@ export type StorageColumnTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly ideal_player: CodecTypes['pg/text@1']['output'] | null;
+      readonly ideal_player_color: CodecTypes['pg/text@1']['output'] | null;
       readonly name: CodecTypes['pg/text@1']['output'] | null;
       readonly status: CodecTypes['pg/int4@1']['output'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -918,6 +924,7 @@ export type StorageColumnInputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly game_end_at: CodecTypes['pg/timestamptz-temporal@1']['input'] | null;
       readonly id: CodecTypes['pg/int4@1']['input'];
+      readonly ideal_player_color: CodecTypes['pg/text@1']['input'] | null;
       readonly invoice_id: CodecTypes['pg/int4@1']['input'] | null;
       readonly is_club_paid: CodecTypes['pg/int4@1']['input'] | null;
       readonly is_loser_approved: CodecTypes['pg/int4@1']['input'] | null;
@@ -1035,6 +1042,7 @@ export type StorageColumnInputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly ideal_player: CodecTypes['pg/text@1']['input'] | null;
+      readonly ideal_player_color: CodecTypes['pg/text@1']['input'] | null;
       readonly name: CodecTypes['pg/text@1']['input'] | null;
       readonly status: CodecTypes['pg/int4@1']['input'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -1289,6 +1297,7 @@ export namespace Models {
     is_club_paid: CodecTypes['pg/int4@1']['output'] | null;
     invoice_id: CodecTypes['pg/int4@1']['output'] | null;
     log_details: CodecTypes['pg/json@1']['output'] | null;
+    ideal_player_color: CodecTypes['pg/text@1']['output'] | null;
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     black_player: public_Member | null;
@@ -1323,6 +1332,7 @@ export namespace Models {
     status: CodecTypes['pg/int4@1']['output'] | null;
     created_by: CodecTypes['pg/int4@1']['output'] | null;
     ideal_player: CodecTypes['pg/text@1']['output'] | null;
+    ideal_player_color: CodecTypes['pg/text@1']['output'] | null;
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     admin_creator: public_Admin | null;
@@ -1863,6 +1873,11 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/json@1';
                   readonly nullable: true;
                 };
+                readonly ideal_player_color: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
                 readonly createdAt: {
                   readonly nativeType: 'timestamptz';
                   readonly codecId: 'pg/timestamptz-temporal@1';
@@ -2364,7 +2379,10 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id', 'phone'] };
-              uniques: readonly [{ readonly columns: readonly ['id'] }];
+              uniques: readonly [
+                { readonly columns: readonly ['id'] },
+                { readonly columns: readonly ['chat_id'] },
+              ];
               indexes: readonly [
                 {
                   readonly name: 'members_district_idx_1728c727';
@@ -2730,6 +2748,11 @@ type ContractBase = Omit<
                   readonly nullable: true;
                 };
                 readonly ideal_player: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly ideal_player_color: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: true;
@@ -3517,6 +3540,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/json@1' };
               };
+              readonly ideal_player_color: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -3656,6 +3683,7 @@ type ContractBase = Omit<
                 readonly is_club_paid: { readonly column: 'is_club_paid' };
                 readonly invoice_id: { readonly column: 'invoice_id' };
                 readonly log_details: { readonly column: 'log_details' };
+                readonly ideal_player_color: { readonly column: 'ideal_player_color' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
@@ -4482,6 +4510,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly ideal_player_color: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -4544,6 +4576,7 @@ type ContractBase = Omit<
                 readonly status: { readonly column: 'status' };
                 readonly created_by: { readonly column: 'created_by' };
                 readonly ideal_player: { readonly column: 'ideal_player' };
+                readonly ideal_player_color: { readonly column: 'ideal_player_color' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };

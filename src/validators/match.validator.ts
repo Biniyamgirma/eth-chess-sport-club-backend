@@ -8,6 +8,10 @@ const tableIdParam = z.object({
   tableId: z.coerce.number().int().positive(),
 });
 
+const venueIdParam = z.object({
+  venueId: z.coerce.number().int().positive(),
+});
+
 export const matchStartSchema = z.object({
   params: tableIdParam,
   body: z.object({
@@ -35,17 +39,22 @@ export const telegramMatchWebhookSchema = z.object({
   body: z.object({}).passthrough(),
 });
 
-const telegramChatId = z.union([z.string().min(1), z.number().int()]).transform(String);
+const telegramChatId = z.string().regex(/^-?\d{1,20}$/);
 
 export const telegramBotJoinSchema = z.object({
   params: tableIdParam,
   body: z.object({
     chat_id: telegramChatId,
-    color: z.enum(['white', 'black']).optional(),
+    color: z.enum(['white', 'black']).nullable().optional(),
   }).strict(),
 });
 
 export const telegramBotAccountSchema = z.object({
+  body: z.object({ chat_id: telegramChatId }).strict(),
+});
+
+export const telegramBotVenueTablesSchema = z.object({
+  params: venueIdParam,
   body: z.object({ chat_id: telegramChatId }).strict(),
 });
 
@@ -57,7 +66,7 @@ export const telegramBotLeaveSchema = z.object({
 export const telegramBotMatchSchema = z.object({
   params: idParam,
   body: z.object({ chat_id: telegramChatId }),
-});
+}).strict();
 
 export const telegramBotEndSchema = z.object({
   params: idParam,

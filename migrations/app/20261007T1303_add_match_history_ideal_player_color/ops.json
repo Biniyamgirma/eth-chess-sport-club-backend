@@ -1,0 +1,44 @@
+[
+  {
+    "id": "column.public.match_history.ideal_player_color",
+    "label": "Add column \"ideal_player_color\" to \"match_history\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "ideal_player_color",
+        "table": "match_history"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"ideal_player_color\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "match_history",
+          "ideal_player_color"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"ideal_player_color\"",
+        "sql": "ALTER TABLE \"public\".\"match_history\" ADD COLUMN \"ideal_player_color\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"ideal_player_color\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "match_history",
+          "ideal_player_color"
+        ]
+      }
+    ]
+  }
+]

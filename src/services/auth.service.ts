@@ -66,15 +66,16 @@ export const authService = {
   },
 
   async linkTelegramAccount(payload: {
-    identifier: string;
+    phone?: string;
+    identifier?: string;
     password: string;
     chatId: string;
     telegramUsername?: string;
   }) {
-    const member =
-      (await orm.public.Member.where({ id: payload.identifier }).first()) ??
-      (await orm.public.Member.where({ phone: payload.identifier }).first()) ??
-      (await orm.public.Member.where({ telegram_username: payload.identifier }).first());
+    const identifier = (payload.phone ?? payload.identifier ?? '').trim();
+    const member = payload.phone !== undefined || identifier.startsWith('09')
+      ? await orm.public.Member.where({ phone: identifier }).first()
+      : await orm.public.Member.where({ id: identifier.toUpperCase() }).first();
 
     if (!member || member.is_deleted === 1 || !member.password) {
       throw new AppError('Invalid credentials', 401);
@@ -85,21 +86,25 @@ export const authService = {
       throw new AppError('Invalid credentials', 401);
     }
 
-    const linkedMember = await orm.public.Member.where({ chat_id: payload.chatId }).first();
-    if (linkedMember && linkedMember.id !== member.id) {
-      throw new AppError('This Telegram account is already linked', 409);
-    }
-
-    const updatedMember = await orm.public.Member.where({ id: member.id }).update({
-      chat_id: payload.chatId,
-      telegram_username: payload.telegramUsername ?? member.telegram_username ?? null,
-      updatedAt: Temporal.Now.instant(),
+    const updatedMember = await prisma.transaction(async (tx: any) => {
+      const txOrm = tx.orm as any;
+      await txOrm.public.Member.where({ chat_id: payload.chatId }).update({
+        chat_id: null,
+        telegram_username: null,
+      });
+      return txOrm.public.Member.where({
+        id: member.id,
+        phone: member.phone,
+      }).update({
+        chat_id: payload.chatId,
+        telegram_username: payload.telegramUsername ?? null,
+        updatedAt: Temporal.Now.instant(),
+      });
     });
 
     return {
       id: updatedMember.id,
-      name: updatedMember.f_name ?? updatedMember.phone ?? 'User',
-      chatId: updatedMember.chat_id,
+      name: `${updatedMember.f_name ?? ''} ${updatedMember.l_name ?? ''}`.trim(),
     };
   },
 

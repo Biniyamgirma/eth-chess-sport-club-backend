@@ -39,7 +39,6 @@ router.patch(
 router.patch(
   '/:type/:id/activate',
   requireAuth,
-  requireAdminLevel(5),
   validate(lookupTypeSchema),
   validate(lookupIdSchema),
   activateLookup,

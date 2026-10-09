@@ -69,15 +69,21 @@ export const phoneLogin = async (req: Request, res: Response, next: NextFunction
 
 export const linkTelegramAccount = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { identifier, password, chatId, telegramUsername } = req.body as {
-      identifier: string;
+    const { phone, identifier, password, chatId, telegramUsername } = req.body as {
+      phone?: string;
+      identifier?: string;
       password: string;
       chatId: string;
       telegramUsername?: string;
     };
 
+    if (!phone && !identifier) {
+      throw new AppError('Phone number or identifier is required', 400);
+    }
+
     const member = await authService.linkTelegramAccount({
-      identifier,
+      ...(phone ? { phone } : {}),
+      ...(identifier ? { identifier } : {}),
       password,
       chatId,
       ...(telegramUsername ? { telegramUsername } : {}),

@@ -89,7 +89,7 @@ model Vendor {
   role              Int?
   phone_number      String?    
   email             String? 
-  chat_id           String?   
+  chat_id           String?
   telegram_username String?    
   whats_up_username String?    
      createdAt DateTime 
@@ -151,7 +151,7 @@ model Member {
   id                String    @unique   
   f_name            String?    
   l_name            String?    
-  chat_id           String?    
+  chat_id           String?   @unique
   phone             String     
   telegram_username String?    
   trophy            String?    
@@ -263,6 +263,7 @@ model MatchHistory {
   is_club_paid        Int?
   invoice_id          Int?
   log_details         Json?        
+  ideal_player_color  String?
      createdAt DateTime 
   updatedAt DateTime   
 
@@ -295,8 +296,9 @@ model VenueTable {
   status       Int?         
   created_by   Int?      
   ideal_player String?    
+  ideal_player_color String?
      createdAt DateTime 
-  updatedAt DateTime  
+  updatedAt  DateTime
 
   venue         Venue?         @relation(fields: [venue_id], references: [id])
   admin_creator Admin?         @relation("VenueTableCreatedByAdmin", fields: [created_by], references: [id])

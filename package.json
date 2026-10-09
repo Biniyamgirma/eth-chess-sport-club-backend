@@ -8,6 +8,7 @@
     "dev": "nodemon",
     "build": "tsc",
     "start": "node dist/server.js",
+    "test:telegram-integration": "node --test tests/telegram-bot.integration.test.js",
     "postinstall": "prisma skills sync || exit 0"
   },
   "keywords": [],
