@@ -1,5 +1,6 @@
 import { prisma } from '../config/prisma.js';
 import { AppError } from '../middlewares/errorHandler.js';
+import { matchInvoiceService } from './match-invoice.service.js';
 import { venueTableService } from './venue-table.service.js';
 
 const orm = prisma.orm as any;
@@ -49,7 +50,9 @@ const getActivePlayerIds = async () => {
 };
 
 export const venueOwnerBotService = {
+
   async listVenues(chatId: string) {
+    console.log(`Listing venues for chat_id=${chatId}`);
     const vendor = await getVendorByChatId(chatId);
     return orm.public.Venue.where({ vendor_id: vendor.id, status: 1, is_deleted: 0 }).all();
   },
@@ -57,13 +60,16 @@ export const venueOwnerBotService = {
   async listTables(chatId: string, venueId: number) {
     const vendor = await getVendorByChatId(chatId);
     await getOwnedVenue(Number(vendor.id), venueId);
-    const tables = await orm.public.VenueTable.where({ venue_id: venueId, status: 1 }).all();
+    const tables = await orm.public.VenueTable.where({ venue_id: venueId }).all();
     return Promise.all(tables.map(async (table: any) => {
       const activeMatch = await orm.public.MatchHistory.where({
         table_id: table.id,
         game_end_at: null,
       }).first();
-      return { ...table, is_available: !activeMatch && !table.ideal_player };
+      return {
+        ...table,
+        is_available: Number(table.status) === 1 && !activeMatch && !table.ideal_player,
+      };
     }));
   },
 
@@ -71,6 +77,41 @@ export const venueOwnerBotService = {
     const vendor = await getVendorByChatId(chatId);
     await getOwnedVenue(Number(vendor.id), venueId);
     return venueTableService.createTable(venueId, { name });
+  },
+
+  async setTableStatus(chatId: string, venueId: number, tableId: number, status: 0 | 1) {
+    const vendor = await getVendorByChatId(chatId);
+    await getOwnedVenue(Number(vendor.id), venueId);
+    const table = await orm.public.VenueTable.where({ id: tableId, venue_id: venueId }).first();
+    if (!table) {
+      throw new AppError('Venue table not found', 404);
+    }
+    return venueTableService.setTableStatus(tableId, status);
+  },
+
+  async createInvoice(
+    chatId: string,
+    venueId: number,
+    input: { member_id?: string; phone?: string },
+  ) {
+    const vendor = await getVendorByChatId(chatId);
+    await getOwnedVenue(Number(vendor.id), venueId);
+    return matchInvoiceService.createInvoice(
+      { ...input, venue_id: venueId },
+      { role: 'vendor', id: Number(vendor.id) },
+    );
+  },
+
+  async updateInvoiceStatus(
+    chatId: string,
+    invoiceId: number,
+    status: 'paid' | 'canceled',
+  ) {
+    const vendor = await getVendorByChatId(chatId);
+    return matchInvoiceService.updateStatus(invoiceId, status, {
+      role: 'vendor',
+      id: Number(vendor.id),
+    });
   },
 
   async listActiveMatches(chatId: string, venueId: number) {
@@ -98,6 +139,11 @@ export const venueOwnerBotService = {
         table_name: table?.name || `Table ${match.table_id}`,
       };
     }));
+  },
+
+  async listActiveCancellationReasons(chatId: string) {
+    await getVendorByChatId(chatId);
+    return orm.public.CancellationReason.where({ status: 'active' }).all();
   },
 
   async startManualMatch(
@@ -170,8 +216,16 @@ export const venueOwnerBotService = {
     };
   },
 
-  async cancelMatch(chatId: string, matchId: number) {
+  async cancelMatch(chatId: string, matchId: number, cancellationReasonId: number) {
     const vendor = await getVendorByChatId(chatId);
+    const cancellationReason = await orm.public.CancellationReason.where({
+      id: cancellationReasonId,
+      status: 'active',
+    }).first();
+    if (!cancellationReason) {
+      throw new AppError('Choose an active cancellation reason', 400);
+    }
+
     const match = await orm.public.MatchHistory.where({ id: matchId }).first();
     if (!match || match.game_end_at) {
       throw new AppError('Active match not found', 404);
@@ -182,16 +236,14 @@ export const venueOwnerBotService = {
     const details = typeof match.log_details === 'object' && match.log_details !== null
       ? match.log_details
       : {};
-      const  matchEndAt = Temporal.Now.instant();
-    const duration =  Math.max(
-  1,
-  Math.ceil(matchEndAt.since(match.started_at).total({ unit: "minutes" })),
-);
+    const duration = match.started_at
+      ? Math.max(1, Math.ceil(now.since(match.started_at).total({ unit: 'minutes' })))
+      : null;
     const cancelledMatch = await orm.public.MatchHistory.where({ id: match.id }).update({
       game_end_at: now,
       time_in_min: duration,
       status: 'cancelled',
-      cancellation_reason: null,
+      cancellation_reason: cancellationReason.id,
       log_details: {
         ...details,
         cancelled_by_vendor_id: vendor.id,

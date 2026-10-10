@@ -5,6 +5,7 @@ import {
   getCurrentMember,
   getMember,
   getTelegramMemberProfile,
+  linkTelegramChessComAccount,
   listMembers,
   registerMember,
   registerTelegramMember,
@@ -24,6 +25,7 @@ import {
   memberRegisterSchema,
   memberSyncSchema,
   memberUpdateSchema,
+  telegramChessComLinkSchema,
   telegramMemberProfileSchema,
   telegramMemberRegisterSchema,
 } from '../validators/member.validator.js';
@@ -43,6 +45,13 @@ router.post(
   validate(telegramMemberProfileSchema),
   requireLinkedTelegramMember,
   getTelegramMemberProfile,
+);
+router.post(
+  '/bot/link-chesscom',
+  requireTelegramBot,
+  validate(telegramChessComLinkSchema),
+  requireLinkedTelegramMember,
+  linkTelegramChessComAccount,
 );
 
 router.get('/', requireAuth, requireRole(['admin']), listMembers);// works

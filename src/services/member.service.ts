@@ -4,6 +4,8 @@ import { generateMemberId } from '../utils/member-id.js';
 import { hashPassword } from '../utils/password.js';
 
 const orm = prisma.orm as any;
+const CHESS_COM_USER_AGENT =
+  'Ethchess-telegram-bot/1.0 (username: Biniyam_Girma; contact: ethchess77@gmail.com)';
 
 interface ChessComProfile {
   username?: string;
@@ -14,6 +16,12 @@ interface ChessComProfile {
   status?: string;
   url?: string;
   perfs?: Record<string, { rating?: number; games?: number; rd?: number; prog?: number }>;
+}
+
+interface ChessComStats {
+  chess_bullet?: { last?: { rating?: number } };
+  chess_blitz?: { last?: { rating?: number } };
+  chess_rapid?: { last?: { rating?: number } };
 }
 
 interface LichessProfile {
@@ -32,20 +40,63 @@ interface LichessProfile {
   perfs?: Record<string, { rating?: number; games?: number; rd?: number; prog?: number }>;
 }
 
-const fetchJson = async <T>(url: string): Promise<T> => {
+const fetchJson = async <T>(url: string, userAgent = 'EthChess-Backend/1.0'): Promise<T> => {
   const response = await fetch(url, {
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'EthChess-Backend/1.0',
+      'User-Agent': userAgent,
     },
   });
 
   if (!response.ok) {
-    throw new AppError(`External profile fetch failed: ${response.statusText}`, 502);
+    throw new AppError(
+      response.status === 404
+        ? 'External profile not found'
+        : `External profile fetch failed: ${response.statusText}`,
+      response.status === 404 ? 404 : 502,
+    );
   }
 
   return (await response.json()) as T;
 };
+
+const fetchChessComAccount = async (username: string) => {
+  const encodedUsername = encodeURIComponent(username);
+  const profile = await fetchJson<ChessComProfile>(
+    `https://api.chess.com/pub/player/${encodedUsername}`,
+    CHESS_COM_USER_AGENT,
+  );
+  if (!profile.username) {
+    throw new AppError('Chess.com returned an invalid player profile', 502);
+  }
+
+  let stats: ChessComStats;
+  try {
+    stats = await fetchJson<ChessComStats>(
+      `https://api.chess.com/pub/player/${encodedUsername}/stats`,
+      CHESS_COM_USER_AGENT,
+    );
+  } catch (error) {
+    if (!(error instanceof AppError) || error.statusCode !== 404) {
+      throw error;
+    }
+    stats = {};
+  }
+
+  return { profile, stats };
+};
+
+const chessComDetailsPayload = (
+  username: string,
+  profile: ChessComProfile,
+  stats: ChessComStats,
+) => ({
+  chess_dot_com_username: profile.username ?? username,
+  chess_dot_com_info: { profile, stats },
+  chess_dot_com_bullet_rating: stats.chess_bullet?.last?.rating ?? null,
+  chess_dot_com_blitz_rating: stats.chess_blitz?.last?.rating ?? null,
+  chess_dot_com_rapid_rating: stats.chess_rapid?.last?.rating ?? null,
+});
 
 const ensureMemberExists = async (memberId: string) => {
   const member = await orm.public.Member.where({ id: memberId }).first();
@@ -233,6 +284,34 @@ export const memberService = {
     });
   },
 
+  async linkChessComAccount(memberId: string, username: string) {
+    const member = await ensureMemberExists(memberId);
+    const normalizedUsername = username.trim();
+    const { profile, stats } = await fetchChessComAccount(normalizedUsername);
+    const now = Temporal.Now.instant();
+    const payload = {
+      ...chessComDetailsPayload(normalizedUsername, profile, stats),
+      updatedAt: now,
+    };
+    const existingDetails = await orm.public.MemberDetails.where({ user_id: member.id }).first();
+    if (existingDetails) {
+      await orm.public.MemberDetails.where({ id: existingDetails.id }).update(payload);
+    } else {
+      await orm.public.MemberDetails.create({
+        user_id: member.id,
+        ...payload,
+        createdAt: now,
+      });
+    }
+
+    return {
+      chess_dot_com_username: payload.chess_dot_com_username,
+      chess_dot_com_bullet_rating: payload.chess_dot_com_bullet_rating,
+      chess_dot_com_blitz_rating: payload.chess_dot_com_blitz_rating,
+      chess_dot_com_rapid_rating: payload.chess_dot_com_rapid_rating,
+    };
+  },
+
   async syncExternalProfiles(memberId: string, input: Record<string, any>) {
     const member = await ensureMemberExists(memberId);
     const now = Temporal.Now.instant();
@@ -243,20 +322,9 @@ export const memberService = {
     };
 
     if (input.chessDotComUsername) {
-      const chessProfile = await fetchJson<ChessComProfile>(
-        `https://api.chess.com/pub/player/${encodeURIComponent(String(input.chessDotComUsername))}`,
-      );
-
-      updatePayload.chess_dot_com_username = String(input.chessDotComUsername);
-      updatePayload.chess_dot_com_info = chessProfile;
-      updatePayload.chess_dot_com_bullet_rating = chessProfile.perfs?.bullet?.rating ?? null;
-      updatePayload.chess_dot_com_blitz_rating = chessProfile.perfs?.blitz?.rating ?? null;
-      updatePayload.chess_dot_com_rapid_rating = chessProfile.perfs?.rapid?.rating ?? null;
-
-      await orm.public.Member.where({ id: memberId }).update({
-        chess_dot_com_username: String(input.chessDotComUsername),
-        updatedAt: now,
-      });
+      const username = String(input.chessDotComUsername).trim();
+      const { profile, stats } = await fetchChessComAccount(username);
+      Object.assign(updatePayload, chessComDetailsPayload(username, profile, stats));
     }
 
     if (input.lichessUsername) {
@@ -270,11 +338,6 @@ export const memberService = {
       updatePayload.lichess_blitz_rating = lichessProfile.perfs?.blitz?.rating ?? null;
       updatePayload.lichess_rapid_rating = lichessProfile.perfs?.rapid?.rating ?? null;
       updatePayload.lichess_classical_rating = lichessProfile.perfs?.classical?.rating ?? null;
-
-      await orm.public.Member.where({ id: memberId }).update({
-        lichess_username: String(input.lichessUsername),
-        updatedAt: now,
-      });
     }
 
     if (existingDetails) {
@@ -283,19 +346,8 @@ export const memberService = {
 
     return orm.public.MemberDetails.create({
       user_id: member.id,
-      chess_dot_com_username: input.chessDotComUsername ?? null,
-      lichess_username: input.lichessUsername ?? null,
-      chess_dot_com_info: input.chessDotComUsername ? await fetchJson<ChessComProfile>(`https://api.chess.com/pub/player/${encodeURIComponent(String(input.chessDotComUsername))}`) : null,
-      lichess_info: input.lichessUsername ? await fetchJson<LichessProfile>(`https://lichess.org/api/user/${encodeURIComponent(String(input.lichessUsername))}`) : null,
-      chess_dot_com_bullet_rating: input.chessDotComUsername ? (await fetchJson<ChessComProfile>(`https://api.chess.com/pub/player/${encodeURIComponent(String(input.chessDotComUsername))}`)).perfs?.bullet?.rating ?? null : null,
-      chess_dot_com_blitz_rating: input.chessDotComUsername ? (await fetchJson<ChessComProfile>(`https://api.chess.com/pub/player/${encodeURIComponent(String(input.chessDotComUsername))}`)).perfs?.blitz?.rating ?? null : null,
-      chess_dot_com_rapid_rating: input.chessDotComUsername ? (await fetchJson<ChessComProfile>(`https://api.chess.com/pub/player/${encodeURIComponent(String(input.chessDotComUsername))}`)).perfs?.rapid?.rating ?? null : null,
-      lichess_bullet_rating: input.lichessUsername ? (await fetchJson<LichessProfile>(`https://lichess.org/api/user/${encodeURIComponent(String(input.lichessUsername))}`)).perfs?.bullet?.rating ?? null : null,
-      lichess_blitz_rating: input.lichessUsername ? (await fetchJson<LichessProfile>(`https://lichess.org/api/user/${encodeURIComponent(String(input.lichessUsername))}`)).perfs?.blitz?.rating ?? null : null,
-      lichess_rapid_rating: input.lichessUsername ? (await fetchJson<LichessProfile>(`https://lichess.org/api/user/${encodeURIComponent(String(input.lichessUsername))}`)).perfs?.rapid?.rating ?? null : null,
-      lichess_classical_rating: input.lichessUsername ? (await fetchJson<LichessProfile>(`https://lichess.org/api/user/${encodeURIComponent(String(input.lichessUsername))}`)).perfs?.classical?.rating ?? null : null,
+      ...updatePayload,
       createdAt: now,
-      updatedAt: now,
     });
   },
 };

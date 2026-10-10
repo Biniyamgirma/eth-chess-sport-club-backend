@@ -67,6 +67,26 @@ export const getTelegramMemberProfile = async (
   }
 };
 
+export const linkTelegramChessComAccount = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.member) {
+      throw new AppError('Authentication required', 401);
+    }
+
+    const account = await memberService.linkChessComAccount(
+      req.member.id,
+      req.body.chess_dot_com_username,
+    );
+    return res.status(200).json({ success: true, data: account });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const listMembers = async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const members = await memberService.listMembers();

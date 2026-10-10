@@ -39,6 +39,13 @@ export const telegramMemberProfileSchema = z.object({
   }).strict(),
 });
 
+export const telegramChessComLinkSchema = z.object({
+  body: z.object({
+    chat_id: z.string().regex(/^-?\d{1,20}$/),
+    chess_dot_com_username: z.string().trim().min(2).max(25).regex(/^[A-Za-z0-9_-]+$/),
+  }).strict(),
+});
+
 export const memberUpdateSchema = z.object({
   body: z.object({
     f_name: z.string().min(1).optional(),
