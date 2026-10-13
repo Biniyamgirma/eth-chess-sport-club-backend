@@ -28,7 +28,7 @@ app.use((req, _res, next) => {
 });
 app.use(
   cors({
-    origin: true,
+    origin: true,/// am gonna change this to a specific origin later
     credentials: true,
   }),
 );

@@ -2,6 +2,10 @@ import type { Request, Response, NextFunction } from 'express';
 
 import { AppError } from '../middlewares/errorHandler.js';
 import { authService } from '../services/auth.service.js';
+import {
+  authCookieClearOptions,
+  authCookieOptions,
+} from '../utils/auth-cookie.js';
 
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -21,12 +25,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       role,
     });
 
-    res.cookie('token', result.token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('token', result.token, authCookieOptions);
 
     return res.status(200).json({
       success: true,
@@ -50,12 +49,7 @@ export const phoneLogin = async (req: Request, res: Response, next: NextFunction
       identifierType: 'phone',
     });
 
-    res.cookie('token', result.token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('token', result.token, authCookieOptions);
 
     return res.status(200).json({
       success: true,
@@ -127,7 +121,7 @@ export const linkTelegramVendorAccount = async (req: Request, res: Response, nex
 
 export const logout = async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    res.clearCookie('token');
+    res.clearCookie('token', authCookieClearOptions);
     return res.status(200).json({
       success: true,
       message: 'Logged out successfully',

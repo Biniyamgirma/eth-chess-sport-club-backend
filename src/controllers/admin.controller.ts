@@ -1,16 +1,10 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { adminService } from '../services/admin.service.js';
-
-const sevenDaysInMilliseconds = 7 * 24 * 60 * 60 * 1000;
+import { authCookieOptions } from '../utils/auth-cookie.js';
 
 const setAdminCookie = (res: Response, token: string) => {
-  res.cookie('token', token, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: sevenDaysInMilliseconds,
-  });
+  res.cookie('token', token, authCookieOptions);
 };
 
 export const loginAdmin = async (req: Request, res: Response, next: NextFunction) => {
