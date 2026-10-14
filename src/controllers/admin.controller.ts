@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 
 import { adminService } from '../services/admin.service.js';
+import { dashboardService } from '../services/dashboard.service.js';
 import { authCookieOptions } from '../utils/auth-cookie.js';
 
 const setAdminCookie = (res: Response, token: string) => {
@@ -73,6 +74,19 @@ export const getAdminRoles = async (req: Request, res: Response, next: NextFunct
   try {
     const roles = await adminService.getRoles();
     return res.status(200).json({ success: true, data: roles });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getAdminDashboardSummary = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const summary = await dashboardService.getSummary();
+    return res.status(200).json({ success: true, data: summary });
   } catch (error) {
     return next(error);
   }
