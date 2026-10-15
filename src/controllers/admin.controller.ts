@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 
 import { adminService } from '../services/admin.service.js';
 import { dashboardService } from '../services/dashboard.service.js';
+import { AppError } from '../middlewares/errorHandler.js';
 import { authCookieOptions } from '../utils/auth-cookie.js';
 
 const setAdminCookie = (res: Response, token: string) => {
@@ -18,6 +19,22 @@ export const loginAdmin = async (req: Request, res: Response, next: NextFunction
       message: 'Login successful',
       data: { user: result.user },
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getCurrentAdminAccess = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      throw new AppError('Admin authentication required', 401);
+    }
+    const access = await adminService.getAccessLevel(Number(req.user.id));
+    return res.status(200).json({ success: true, data: access });
   } catch (error) {
     return next(error);
   }

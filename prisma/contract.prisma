@@ -36,6 +36,7 @@ model Admin {
   approved_invoices Invoice[]
   managed_venues    Venue[]      @relation("VenueResponsiblePerson")
   created_tables    VenueTable[] @relation("VenueTableCreatedByAdmin")
+  votes             Vote[]
 
   @@map("admin")
 }
@@ -92,6 +93,7 @@ model Vendor {
   chat_id           String?
   telegram_username String?    
   whats_up_username String?    
+  status            Int       @default(1)
      createdAt DateTime 
   updatedAt DateTime   
 
@@ -117,13 +119,16 @@ model BrilliantMoveSubmission {
 
   member Member? @relation(fields: [user_id], references: [id])
   votes  Vote[]
+  weekly_winners BrilliantMoveWeeklyWinner[]
 
+  @@index([createdAt], map: "brilliant_move_submission_created_at_idx")
   @@map("brilliant_move_submission")
 }
 
 model Vote {
   id            Int       @id @default(autoincrement())
   user_id       String?    
+  admin_id      Int?
   vote_type     String?    
   submission_id Int?
   status        Int?      
@@ -132,8 +137,26 @@ model Vote {
 
   submission BrilliantMoveSubmission? @relation(fields: [submission_id], references: [id])
   member     Member?                  @relation(fields: [user_id], references: [id])
+  admin      Admin?                   @relation(fields: [admin_id], references: [id])
 
+  @@unique([submission_id, user_id], map: "vote_submission_member_unique")
+  @@unique([submission_id, admin_id], map: "vote_submission_admin_unique")
   @@map("vote")
+}
+
+model BrilliantMoveWeeklyWinner {
+  id            Int       @id @default(autoincrement())
+  week_start    DateTime
+  submission_id Int
+  total_votes   Int
+  admin_votes   Int
+  createdAt     DateTime
+
+  submission BrilliantMoveSubmission @relation(fields: [submission_id], references: [id])
+
+  @@unique([week_start], map: "brilliant_move_weekly_winner_week_start_unique")
+  @@index([submission_id], map: "brilliant_move_weekly_winner_submission_id_idx")
+  @@map("brilliant_move_weekly_winner")
 }
 
 model District {

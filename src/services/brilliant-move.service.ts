@@ -1,249 +1,400 @@
-import { number } from 'zod';
+import { Temporal } from '@js-temporal/polyfill';
 import { prisma } from '../config/prisma.js';
 import { AppError } from '../middlewares/errorHandler.js';
+import { calculateWeeklyWinner, canVoteOnSubmission } from '../utils/brilliant-move-rules.js';
+import {
+  getBrilliantMoveWeek,
+  isWithinBrilliantMoveWeek,
+} from '../utils/brilliant-move-week.js';
 
 const orm = prisma.orm as any;
+type VoterRole = 'admin' | 'member';
+type Voter = { id: string; role: VoterRole };
 
-const getCurrentWeekNumber = () => {
-  const now = Temporal.Now.instant();
-  const zoned = now.toZonedDateTimeISO('Africa/Addis_Ababa');
-  const weekNumber = zoned.weekOfYear;
+const asInstant = (value: unknown): Temporal.Instant =>
+  value instanceof Temporal.Instant
+    ? value
+    : Temporal.Instant.from(String(value));
 
-  return weekNumber;
-};
-
-const isCurrentWeekSubmission = (submission: any, now: Temporal.ZonedDateTime) => {
-  if (Number(submission.week_number) !== now.weekOfYear) {
-    return false;
+const getVoterId = (vote: any): string | null => {
+  if (vote.admin_id !== null && vote.admin_id !== undefined) {
+    return String(vote.admin_id);
   }
-
-  const createdAt = submission.createdAt instanceof Temporal.Instant
-    ? submission.createdAt
-    : Temporal.Instant.from(String(submission.createdAt));
-  const submittedAt = createdAt
-    .toZonedDateTimeISO('Africa/Addis_Ababa');
-  return submittedAt.yearOfWeek === now.yearOfWeek &&
-    submittedAt.weekOfYear === now.weekOfYear;
+  if (typeof vote.user_id === 'string') return vote.user_id;
+  return null;
 };
 
-const enrichSubmission = async (submission: any) => {
-  if (!submission) {
-    return submission;
-  }
-
-  const votes = await orm.public.Vote.where({ submission_id: submission.id }).all();
-  const voteCount = votes.length;
-  const adminVoteWeight = Number(((Number(submission.admin_vote ?? 0) * 0.5)).toFixed(2));
-  const weightedVoteCount = Number((voteCount + adminVoteWeight).toFixed(2));
-
-  return {
-    ...submission,
-    vote_count: voteCount,
-    admin_vote_weighted: adminVoteWeight,
-    weighted_vote_count: weightedVoteCount,
-    votes,
-  };
-};
+const getVoterRole = (vote: any): VoterRole =>
+  vote.admin_id !== null && vote.admin_id !== undefined ? 'admin' : 'member';
 
 const ensureEligibleMember = async (memberId: string, database = orm) => {
   const member = await database.public.Member.where({ id: memberId }).first();
-
   if (!member || member.is_deleted === 1) {
     throw new AppError('Only active members can perform this action', 403);
   }
-
   return member;
 };
 
+const ensureEligibleAdmin = async (adminId: number, database = orm) => {
+  const admin = await database.public.Admin.where({ id: adminId }).first();
+  if (!admin) {
+    throw new AppError('Admin not found', 404);
+  }
+  return admin;
+};
+
+const findSubmission = async (submissionId: number, database = orm) => {
+  const submission = await database.public.BrilliantMoveSubmission
+    .where({ id: submissionId })
+    .first();
+  if (!submission) {
+    throw new AppError('Brilliant move submission not found', 404);
+  }
+  return submission;
+};
+
+const getMoveCard = async (submission: any, voter?: Voter) => {
+  const votes = await orm.public.Vote
+    .where({ submission_id: submission.id })
+    .all();
+  const adminVotes = votes.filter(
+    (vote: any) => getVoterRole(vote) === 'admin',
+  );
+  const currentUserVoted = voter
+    ? votes.some(
+        (vote: any) =>
+          getVoterRole(vote) === voter.role && getVoterId(vote) === voter.id,
+      )
+    : false;
+
+  return {
+    ...submission,
+    total_votes: votes.length,
+    admin_votes: adminVotes.length,
+    vote_count: votes.length,
+    current_user_voted: currentUserVoted,
+    is_own: voter?.role === 'member' && submission.user_id === voter.id,
+  };
+};
+
+const getSubmissions = async () =>
+  orm.public.BrilliantMoveSubmission.all();
+
+const getActiveSubmissions = async () => {
+  const submissions = await getSubmissions();
+  return submissions.filter((submission: any) => submission.is_deleted !== 1);
+};
+
+const getVoteTotals = async (submission: any) => {
+  const votes = await orm.public.Vote
+    .where({ submission_id: submission.id })
+    .all();
+  return {
+    ...submission,
+    total_votes: votes.length,
+    admin_votes: votes.filter(
+      (vote: any) => getVoterRole(vote) === 'admin',
+    ).length,
+  };
+};
+
+const matchesVoter = (vote: any, voter: Voter) =>
+  getVoterRole(vote) === voter.role && getVoterId(vote) === voter.id;
+
 export const brilliantMoveService = {
-  
   async submitBrilliantMove(memberId: string, input: Record<string, any>) {
     await ensureEligibleMember(memberId);
     const now = Temporal.Now.instant();
-    const zoned = now.toZonedDateTimeISO('Africa/Addis_Ababa');
-
-const weekNumber = zoned.weekOfYear;   // ISO week number, e.g. 40 
-    const payload = {
+    const week = getBrilliantMoveWeek(now);
+    return orm.public.BrilliantMoveSubmission.create({
       user_id: memberId,
       platform: input.platform ?? 'unknown',
-      admin_vote: input.admin_vote ?? null,
       move_url: input.move_url ?? null,
-      week_number: weekNumber,
+      week_number: week.weekNumber,
       rank: input.rank ? Number(input.rank) : null,
       is_awarded: 0,
       createdAt: now,
       updatedAt: now,
-    };
-
-    return orm.public.BrilliantMoveSubmission.create(payload);
+    });
   },
 
-  async editBrilliantMoveSubmission(memberId: string, submissionId: number, input: Record<string, any>) {
+  async editBrilliantMoveSubmission(
+    memberId: string,
+    submissionId: number,
+    input: Record<string, any>,
+  ) {
     await ensureEligibleMember(memberId);
-
-    const submission = await this.getSubmissionById(submissionId);
-
+    const submission = await findSubmission(submissionId);
     if (submission.user_id !== memberId) {
       throw new AppError('You can only edit your own brilliant move submission', 403);
     }
-    const now= Temporal.Now.instant()
-    const updated = await orm.public.BrilliantMoveSubmission.where({ id: submissionId }).update({
-      platform: input.platform ?? submission.platform,
-      move_url: input.move_url ?? submission.move_url,
-      week_number: input.week_number !== undefined ? Number(input.week_number) : submission.week_number,
-      updatedAt: now,
-    });
-
-    return enrichSubmission(updated);
+    const updated = await orm.public.BrilliantMoveSubmission
+      .where({ id: submissionId })
+      .update({
+        platform: input.platform ?? submission.platform,
+        move_url: input.move_url ?? submission.move_url,
+        updatedAt: Temporal.Now.instant(),
+      });
+    return getMoveCard(updated, { id: memberId, role: 'member' });
   },
 
   async updateRankAndAward(adminId: number, submissionId: number, input: Record<string, any>) {
-    const admin = await orm.public.Admin.where({ id: adminId }).first();
-
-    if (!admin) {
-      throw new AppError('Admin not found', 404);
-    }
-
+    const admin = await ensureEligibleAdmin(adminId);
     if (Number(admin.role ?? 0) <= 6) {
-      throw new AppError('Only administrators with role greater than 6 can update rank and award', 403);
+      throw new AppError(
+        'Only administrators with role greater than 6 can update rank and award',
+        403,
+      );
     }
-
-    const submission = await this.getSubmissionById(submissionId);
-
-    if (submission.week_number !== null && submission.week_number !== undefined) {
-      const currentWeekNumber = getCurrentWeekNumber();
-      if (Number(submission.week_number) !== currentWeekNumber) {
-        throw new AppError('Rank and award updates are only allowed within the same week', 400);
-      }
-    }
-    const now= Temporal.Now.instant()
-    const updated = await orm.public.BrilliantMoveSubmission.where({ id: submissionId }).update({
-      rank: input.rank !== undefined ? Number(input.rank) : submission.rank,
-      is_awarded: input.is_awarded !== undefined ? Number(input.is_awarded) : submission.is_awarded,
-      updatedAt: now,
-    });
-
-    return enrichSubmission(updated);
+    const submission = await findSubmission(submissionId);
+    const updated = await orm.public.BrilliantMoveSubmission
+      .where({ id: submissionId })
+      .update({
+        rank: input.rank !== undefined ? Number(input.rank) : submission.rank,
+        is_awarded:
+          input.is_awarded !== undefined
+            ? Number(input.is_awarded)
+            : submission.is_awarded,
+        updatedAt: Temporal.Now.instant(),
+      });
+    return getMoveCard(updated, { id: String(adminId), role: 'admin' });
   },
 
-  async listSubmissions() {
-    const submissions = await orm.public.BrilliantMoveSubmission.all();
-    return Promise.all(submissions.map((submission: any) => enrichSubmission(submission)));
-  },
-
-  async listCurrentWeekSubmissions(memberId: string) {
-    await ensureEligibleMember(memberId);
-    const now = Temporal.Now.instant().toZonedDateTimeISO('Africa/Addis_Ababa');
-    const submissions = await orm.public.BrilliantMoveSubmission.all();
-
+  async listSubmissions(voter?: Voter) {
+    const submissions =
+      voter?.role === 'admin'
+        ? await getSubmissions()
+        : await getActiveSubmissions();
     return Promise.all(
-      submissions
-        .filter((submission: any) =>
-          isCurrentWeekSubmission(submission, now) &&
-          submission.is_deleted !== 1 &&
-          typeof submission.move_url === 'string' &&
-          submission.move_url.length > 0,
-        )
-        .map(async (submission: any) => {
-          const votes = await orm.public.Vote.where({ submission_id: submission.id }).all();
-          const memberVote = votes.find((vote: any) => vote.user_id === memberId);
-
-          return {
-            id: submission.id,
-            move_url: submission.move_url,
-            platform: submission.platform,
-            vote_count: votes.length,
-            is_own: submission.user_id === memberId,
-            has_voted: Boolean(memberVote),
-          };
-        }),
+      submissions.map((submission: any) => getMoveCard(submission, voter)),
     );
   },
 
-  async getSubmissionById(id: number) {
-    const submission = await orm.public.BrilliantMoveSubmission.where({ id }).first();
+  async listCurrentWeekSubmissions(voter: Voter) {
+    if (voter.role === 'member') {
+      await ensureEligibleMember(voter.id);
+    } else {
+      await ensureEligibleAdmin(Number(voter.id));
+    }
+    const week = getBrilliantMoveWeek();
+    const submissions =
+      voter.role === 'admin'
+        ? await getSubmissions()
+        : await getActiveSubmissions();
+    return Promise.all(
+      submissions
+        .filter((submission: any) =>
+          isWithinBrilliantMoveWeek(submission.createdAt, week),
+        )
+        .map((submission: any) => getMoveCard(submission, voter)),
+    );
+  },
 
-    if (!submission) {
-      throw new AppError('Brilliant move submission not found', 404);
+  async listAllSubmissions(
+    voter: Voter,
+    page: number,
+    pageSize: number,
+    sort: 'newest' | 'most_votes',
+  ) {
+    const submissions =
+      voter.role === 'admin'
+        ? await getSubmissions()
+        : await getActiveSubmissions();
+    const cards = await Promise.all(
+      submissions.map((submission: any) => getMoveCard(submission, voter)),
+    );
+    cards.sort((left: any, right: any) =>
+      sort === 'most_votes'
+        ? right.total_votes - left.total_votes ||
+          right.admin_votes - left.admin_votes ||
+          Temporal.Instant.compare(
+            asInstant(right.createdAt),
+            asInstant(left.createdAt),
+          )
+        : Temporal.Instant.compare(
+            asInstant(right.createdAt),
+            asInstant(left.createdAt),
+          ),
+    );
+    const total = cards.length;
+    const start = (page - 1) * pageSize;
+    return {
+      items: cards.slice(start, start + pageSize),
+      page,
+      page_size: pageSize,
+      total,
+      total_pages: Math.ceil(total / pageSize),
+      sort,
+    };
+  },
+
+  async listWeeklyWinners(voter: Voter) {
+    const now = Temporal.Now.instant();
+    const submissions = await getActiveSubmissions();
+    const grouped = new Map<string, any[]>();
+
+    for (const submission of submissions) {
+      const week = getBrilliantMoveWeek(asInstant(submission.createdAt));
+      if (Temporal.Instant.compare(week.end, now) > 0) continue;
+      const group = grouped.get(week.weekStart) ?? [];
+      group.push(submission);
+      grouped.set(week.weekStart, group);
     }
 
-    return enrichSubmission(submission);
+    for (const [weekStart, weeklySubmissions] of grouped) {
+      const week = getBrilliantMoveWeek(
+        Temporal.Instant.from(`${weekStart}T12:00:00Z`),
+      );
+      const existing = await orm.public.BrilliantMoveWeeklyWinner
+        .where({ week_start: week.start })
+        .first();
+      if (existing) continue;
+
+      const totals = await Promise.all(weeklySubmissions.map(getVoteTotals));
+      const winner = calculateWeeklyWinner(totals);
+      if (!winner) continue;
+      try {
+        await orm.public.BrilliantMoveWeeklyWinner.create({
+          week_start: week.start,
+          submission_id: winner.id,
+          total_votes: winner.total_votes,
+          admin_votes: winner.admin_votes,
+          createdAt: now,
+        });
+      } catch (error) {
+        const stored = await orm.public.BrilliantMoveWeeklyWinner
+          .where({ week_start: week.start })
+          .first();
+        if (!stored) throw error;
+      }
+    }
+
+    const storedWinners = await orm.public.BrilliantMoveWeeklyWinner.all();
+    const completedWinners = storedWinners.filter((winner: any) =>
+      Temporal.Instant.compare(asInstant(winner.week_start), now) < 0,
+    );
+    completedWinners.sort((left: any, right: any) =>
+      Temporal.Instant.compare(
+        asInstant(right.week_start),
+        asInstant(left.week_start),
+      ),
+    );
+
+    return Promise.all(
+      completedWinners.map(async (winner: any) => {
+        const submission = await orm.public.BrilliantMoveSubmission
+          .where({ id: winner.submission_id })
+          .first();
+        if (!submission) {
+          throw new AppError(
+            `Stored weekly winner references missing move ${winner.submission_id}`,
+            500,
+          );
+        }
+        const card = await getMoveCard(submission, voter);
+        const week = getBrilliantMoveWeek(asInstant(winner.week_start));
+        return {
+          ...card,
+          total_votes: winner.total_votes,
+          admin_votes: winner.admin_votes,
+          vote_count: winner.total_votes,
+          week_start: week.weekStart,
+          week_end: week.weekEnd,
+        };
+      }),
+    );
+  },
+
+  async getSubmissionById(id: number, voter?: Voter) {
+    return getMoveCard(await findSubmission(id), voter);
   },
 
   async adminVoteOnSubmission(adminId: number, submissionId: number, vote: number) {
-    const admin = await orm.public.Admin.where({ id: adminId }).first();
-    if (!admin) {
-      throw new AppError('Admin not found', 404);
-    }
-
-    const submission = await this.getSubmissionById(submissionId);
-    const now =  Temporal.Now.instant()
-    const updated = await orm.public.BrilliantMoveSubmission.where({ id: submission.id }).update({
-      admin_vote: vote,
-      is_awarded: vote > 0 ? 1 : 0,
-      updatedAt: now,
-    });
-
-    return enrichSubmission(updated);
+    await ensureEligibleAdmin(adminId);
+    await this.setVoteOnSubmission(
+      { id: String(adminId), role: 'admin' },
+      submissionId,
+      vote > 0,
+    );
+    const submission = await findSubmission(submissionId);
+    const updated = await orm.public.BrilliantMoveSubmission
+      .where({ id: submissionId })
+      .update({
+        admin_vote: vote,
+        is_awarded: vote > 0 ? 1 : 0,
+        updatedAt: Temporal.Now.instant(),
+      });
+    return getMoveCard(updated, { id: String(adminId), role: 'admin' });
   },
 
-  async voteOnSubmission(memberId: string, submissionId: number, voteType: string) {
+  async setVoteOnSubmission(
+    voter: Voter,
+    submissionId: number,
+    shouldVote: boolean,
+  ) {
     return prisma.transaction(async (tx: any) => {
       const txOrm = tx.orm as any;
-      const member = await ensureEligibleMember(memberId, txOrm);
+      const actorId = voter.role === 'admin' ? Number(voter.id) : voter.id;
+      const actor = voter.role === 'admin'
+        ? await ensureEligibleAdmin(Number(actorId), txOrm)
+        : await ensureEligibleMember(String(actorId), txOrm);
+      const actorTable = voter.role === 'admin' ? 'Admin' : 'Member';
 
-      // Serialize this member's concurrent vote requests using the member row.
-      await txOrm.public.Member.where({ id: memberId }).update({
-        updatedAt: member.updatedAt,
+      // Updating the actor row serializes concurrent add/remove requests from one voter.
+      await txOrm.public[actorTable].where({ id: actorId }).update({
+        updatedAt: actor.updatedAt,
       });
 
-      const submission = await txOrm.public.BrilliantMoveSubmission.where({
-        id: submissionId,
-      }).first();
-      if (!submission) {
+      const submission = await findSubmission(submissionId, txOrm);
+      if (submission.is_deleted === 1) {
         throw new AppError('Brilliant move submission not found', 404);
       }
-      if (submission.user_id === memberId) {
+      if (!canVoteOnSubmission(voter, submission.user_id ?? null)) {
         throw new AppError('You cannot vote on your own submission', 400);
       }
 
-      const now = Temporal.Now.instant().toZonedDateTimeISO('Africa/Addis_Ababa');
-      const weeklySubmissions = (await txOrm.public.BrilliantMoveSubmission.all())
-        .filter((item: any) => isCurrentWeekSubmission(item, now));
-      const weeklySubmissionIds = new Set(
-        weeklySubmissions.map((item: any) => Number(item.id)),
-      );
-      if (!weeklySubmissionIds.has(submissionId)) {
-        throw new AppError('Voting is only open for this week’s brilliant moves', 400);
-      }
+      const votes = await txOrm.public.Vote
+        .where({ submission_id: submissionId })
+        .all();
+      const existingVote = votes.find((vote: any) => matchesVoter(vote, voter));
 
-      const memberVotes = await txOrm.public.Vote.where({ user_id: memberId }).all();
-      const existingVote = memberVotes.find(
-        (vote: any) => weeklySubmissionIds.has(Number(vote.submission_id)),
-      );
-      if (existingVote) {
-        if (Number(existingVote.submission_id) === submissionId) {
-          return existingVote;
-        }
-        throw new AppError('You have already voted for another brilliant move this week', 409);
-      }
-
-      const voteTime = Temporal.Now.instant();
-      const created = await txOrm.public.Vote.create({
-        user_id: memberId,
-        vote_type: voteType,
-        submission_id: submissionId,
-        status: 1,
-        createdAt: voteTime,
-        updatedAt: voteTime,
-      });
-
-      return {
-        ...created,
-        vote_count: (await txOrm.public.Vote.where({
+      if (shouldVote && !existingVote) {
+        const now = Temporal.Now.instant();
+        await txOrm.public.Vote.create({
+          user_id: voter.role === 'member' ? voter.id : null,
+          admin_id: voter.role === 'admin' ? Number(voter.id) : null,
+          vote_type: 'upvote',
           submission_id: submissionId,
-        }).all()).length,
+          status: 1,
+          createdAt: now,
+          updatedAt: now,
+        });
+      } else if (!shouldVote && existingVote) {
+        await txOrm.public.Vote.where({ id: existingVote.id }).delete();
+      }
+
+      const updatedVotes = await txOrm.public.Vote
+        .where({ submission_id: submissionId })
+        .all();
+      return {
+        id: submissionId,
+        total_votes: updatedVotes.length,
+        vote_count: updatedVotes.length,
+        admin_votes: updatedVotes.filter(
+          (vote: any) => getVoterRole(vote) === 'admin',
+        ).length,
+        current_user_voted: updatedVotes.some((vote: any) =>
+          matchesVoter(vote, voter),
+        ),
       };
     });
+  },
+
+  async voteOnSubmission(memberId: string, submissionId: number, _voteType: string) {
+    return this.setVoteOnSubmission(
+      { id: memberId, role: 'member' },
+      submissionId,
+      true,
+    );
   },
 };

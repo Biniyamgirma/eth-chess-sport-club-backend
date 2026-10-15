@@ -1,6 +1,7 @@
 import { prisma } from '../config/prisma.js';
 import { AppError } from '../middlewares/errorHandler.js';
 import { generateMemberId } from '../utils/member-id.js';
+import { MEMBER_STATUS } from '../utils/member-status.js';
 import { hashPassword } from '../utils/password.js';
 
 const orm = prisma.orm as any;
@@ -281,6 +282,30 @@ export const memberService = {
       is_deleted: 1,
       status: 0,
       updatedAt: now,
+    });
+  },
+
+  async setMemberBlocked(memberId: string, isBlocked: boolean) {
+    const member = await orm.public.Member.where({ id: memberId }).first();
+    if (!member || member.is_deleted === 1) {
+      throw new AppError('Member not found or deleted', 404);
+    }
+
+    return orm.public.Member.where({ id: memberId }).update({
+      status: isBlocked ? MEMBER_STATUS.blocked : MEMBER_STATUS.active,
+      updatedAt: Temporal.Now.instant(),
+    });
+  },
+
+  async approveOfficialMember(memberId: string) {
+    const member = await orm.public.Member.where({ id: memberId }).first();
+    if (!member || member.is_deleted === 1) {
+      throw new AppError('Member not found or deleted', 404);
+    }
+
+    return orm.public.Member.where({ id: memberId }).update({
+      is_member: 1,
+      updatedAt: Temporal.Now.instant(),
     });
   },
 

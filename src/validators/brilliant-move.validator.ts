@@ -49,3 +49,17 @@ export const brilliantMoveVoteSchema = z.object({
     path: ['vote'],
   }),
 });
+
+export const brilliantMoveParamsSchema = z.object({
+  params: z.object({
+    id: z.coerce.number().int().positive(),
+  }),
+});
+
+export const brilliantMoveListQuerySchema = z.object({
+  query: z.object({
+    page: z.coerce.number().int().positive().default(1),
+    page_size: z.coerce.number().int().min(1).max(100).default(12),
+    sort: z.enum(['newest', 'most_votes']).default('newest'),
+  }),
+});

@@ -8,6 +8,7 @@
     "dev": "nodemon",
     "build": "tsc",
     "start": "node dist/server.js",
+    "test:brilliant-move": "node --import tsx --test tests/brilliant-move.logic.test.ts tests/brilliant-move.routes.integration.test.ts",
     "test:telegram-integration": "node --test tests/telegram-bot.integration.test.js",
     "postinstall": "prisma skills sync || exit 0"
   },

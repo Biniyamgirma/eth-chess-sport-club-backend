@@ -2,6 +2,8 @@ import { prisma } from '../config/prisma.js';
 import { AppError } from '../middlewares/errorHandler.js';
 import { signToken } from '../utils/jwt.js';
 import { comparePassword, hashPassword } from '../utils/password.js';
+import { isMemberBlocked } from '../utils/member-status.js';
+import { isVendorBlocked } from '../utils/vendor-status.js';
 
 const orm = prisma.orm as any;
 
@@ -33,7 +35,12 @@ export const authService = {
         }
       }
 
-      if (!user || !user.password) {
+      if (
+        !user ||
+        !user.password ||
+        (payload.role === 'member' && isMemberBlocked(user)) ||
+        (payload.role === 'vendor' && isVendorBlocked(user))
+      ) {
         throw new AppError('Invalid credentials', 401);
       }
 
@@ -115,7 +122,7 @@ export const authService = {
     telegramUsername?: string;
   }) {
     const vendor = await orm.public.Vendor.where({ phone_number: payload.phone }).first();
-    if (!vendor || !vendor.password) {
+    if (!vendor || !vendor.password || isVendorBlocked(vendor)) {
       throw new AppError('Invalid credentials', 401);
     }
 

@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 
 import { prisma } from '../config/prisma.js';
 import { AppError } from './errorHandler.js';
+import { hasSufficientAdminLevel } from '../utils/admin-level.js';
 
 const orm = prisma.orm as any;
 
@@ -13,7 +14,10 @@ export const requireAdminLevel = (minimumExclusiveLevel: number) => {
       }
 
       const admin = await orm.public.Admin.where({ id: Number(req.user.id) }).first();
-      if (!admin || Number(admin.role) <= minimumExclusiveLevel) {
+      if (
+        !admin ||
+        !hasSufficientAdminLevel(Number(admin.role), minimumExclusiveLevel)
+      ) {
         throw new AppError('Forbidden: insufficient administrator role', 403);
       }
 

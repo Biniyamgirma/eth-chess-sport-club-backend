@@ -160,6 +160,27 @@ export const softDeleteMember = async (req: Request, res: Response, next: NextFu
   }
 };
 
+export const setMemberBlocked = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const member = await memberService.setMemberBlocked(
+      String(req.params.id),
+      req.body.is_blocked,
+    );
+    return res.status(200).json({ success: true, data: member });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const approveOfficialMember = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const member = await memberService.approveOfficialMember(String(req.params.id));
+    return res.status(200).json({ success: true, data: member });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const syncExternalAccounts = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.user) {

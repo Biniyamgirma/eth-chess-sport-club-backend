@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import {
   adminUpdateMember,
+  approveOfficialMember,
   getCurrentMember,
   getMember,
   getTelegramMemberProfile,
@@ -10,10 +11,12 @@ import {
   registerMember,
   registerTelegramMember,
   softDeleteMember,
+  setMemberBlocked,
   syncExternalAccounts,
   updateCurrentMember,
 } from '../controllers/member.controller.js';
 import { requireAuth } from '../middlewares/auth.js';
+import { requireAdminLevel } from '../middlewares/adminLevel.js';
 import { requireRole } from '../middlewares/rbac.js';
 import {
   requireLinkedTelegramMember,
@@ -22,9 +25,11 @@ import {
 import { validate } from '../middlewares/validate.js';
 import {
   adminMemberUpdateSchema,
+  memberBlockSchema,
   memberRegisterSchema,
   memberSyncSchema,
   memberUpdateSchema,
+  officialMemberApprovalSchema,
   telegramChessComLinkSchema,
   telegramMemberProfileSchema,
   telegramMemberRegisterSchema,
@@ -59,7 +64,9 @@ router.get('/me', requireAuth, getCurrentMember);
 router.put('/me', requireAuth, validate(memberUpdateSchema), updateCurrentMember);
 router.patch('/me/link-accounts', requireAuth, validate(memberSyncSchema), syncExternalAccounts);
 router.get('/:id', requireAuth, getMember);
-router.patch('/:id', requireAuth, requireRole(['admin']), validate(adminMemberUpdateSchema), adminUpdateMember);
-router.delete('/:id', requireAuth, requireRole(['admin']), softDeleteMember);
+router.patch('/:id', requireAuth, requireAdminLevel(5), validate(adminMemberUpdateSchema), adminUpdateMember);
+router.patch('/:id/block', requireAuth, requireAdminLevel(5), validate(memberBlockSchema), setMemberBlocked);
+router.post('/:id/approve-official', requireAuth, requireAdminLevel(5), validate(officialMemberApprovalSchema), approveOfficialMember);
+router.delete('/:id', requireAuth, requireAdminLevel(5), softDeleteMember);
 
 export default router;

@@ -8,6 +8,15 @@ const orm = prisma.orm as any;
 
 
 export const adminService = {
+  async getAccessLevel(adminId: number) {
+    const admin = await orm.public.Admin.where({ id: adminId }).first();
+    if (!admin) {
+      throw new AppError('Admin not found', 404);
+    }
+
+    return { admin_level: Number(admin.role) };
+  },
+
   async login(fName: string, password: string) {
     const admins = await orm.public.Admin.where({ f_name: fName }).all();
     const matches = [];

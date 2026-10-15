@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { createVendor, updateCurrentVendor, updateVendor } from '../controllers/vendor.controller.js';
+import { createVendor, listVendors, setVendorBlocked, updateCurrentVendor, updateVendor } from '../controllers/vendor.controller.js';
 import { requireAuth } from '../middlewares/auth.js';
 import { requireAdminLevel } from '../middlewares/adminLevel.js';
 import { requireRole } from '../middlewares/rbac.js';
@@ -9,12 +9,15 @@ import {
 	adminVendorUpdateSchema,
 	vendorCreateSchema,
 	vendorUpdateSchema,
+	vendorBlockSchema,
 } from '../validators/venue.validator.js';
 
 const router = Router();
 
-router.post('/', requireAuth, requireAdminLevel(6), validate(vendorCreateSchema), createVendor);
+router.get('/', requireAuth, requireAdminLevel(2), listVendors);
+router.post('/', requireAuth, requireAdminLevel(2), validate(vendorCreateSchema), createVendor);
 router.put('/me', requireAuth, requireRole(['vendor']), validate(vendorUpdateSchema), updateCurrentVendor);
-router.patch('/:id', requireAuth, requireAdminLevel(6), validate(adminVendorUpdateSchema), updateVendor);
+router.patch('/:id/status', requireAuth, requireAdminLevel(2), validate(vendorBlockSchema), setVendorBlocked);
+router.patch('/:id', requireAuth, requireAdminLevel(2), validate(adminVendorUpdateSchema), updateVendor);
 
 export default router;

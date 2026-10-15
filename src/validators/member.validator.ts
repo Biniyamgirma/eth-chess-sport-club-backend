@@ -85,6 +85,15 @@ export const adminMemberUpdateSchema = z.object({
   }).passthrough(),
 });
 
+export const memberBlockSchema = z.object({
+  params: z.object({ id: z.string().min(1) }),
+  body: z.object({ is_blocked: z.boolean() }).strict(),
+});
+
+export const officialMemberApprovalSchema = z.object({
+  params: z.object({ id: z.string().min(1) }),
+});
+
 export const memberSyncSchema = z.object({
   body: z.object({
     chessDotComUsername: z.string().min(2).optional(),

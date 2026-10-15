@@ -12,6 +12,7 @@ const envSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   TELEGRAM_BOT_API_SECRET: z.string().min(32).optional(),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(16).optional(),
+  BRILLIANT_MOVE_TIME_ZONE: z.string().default('Africa/Addis_Ababa'),
 });
 
 export const env = envSchema.parse(process.env);

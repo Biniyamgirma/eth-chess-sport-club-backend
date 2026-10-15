@@ -1,0 +1,410 @@
+[
+  {
+    "id": "table.brilliant_move_weekly_winner",
+    "label": "Create table \"brilliant_move_weekly_winner\"",
+    "summary": "Creates table \"brilliant_move_weekly_winner\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "brilliant_move_weekly_winner"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"brilliant_move_weekly_winner\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"brilliant_move_weekly_winner\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"brilliant_move_weekly_winner\"",
+        "sql": "CREATE TABLE \"public\".\"brilliant_move_weekly_winner\" (\n  \"admin_votes\" int4 NOT NULL,\n  \"createdAt\" timestamptz NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"submission_id\" int4 NOT NULL,\n  \"total_votes\" int4 NOT NULL,\n  \"week_start\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"brilliant_move_weekly_winner\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"brilliant_move_weekly_winner\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.vote.admin_id",
+    "label": "Add column \"admin_id\" to \"vote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "admin_id",
+        "table": "vote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"admin_id\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "vote",
+          "admin_id"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"admin_id\"",
+        "sql": "ALTER TABLE \"public\".\"vote\" ADD COLUMN \"admin_id\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"admin_id\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "vote",
+          "admin_id"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.brilliant_move_weekly_winner.brilliant_move_weekly_winner_week_start_unique",
+    "label": "Add unique constraint on \"brilliant_move_weekly_winner\" (week_start)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "brilliant_move_weekly_winner_week_start_unique",
+        "table": "brilliant_move_weekly_winner"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"brilliant_move_weekly_winner_week_start_unique\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "brilliant_move_weekly_winner_week_start_unique",
+          "public",
+          "\"public\".\"brilliant_move_weekly_winner\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"brilliant_move_weekly_winner_week_start_unique\"",
+        "sql": "ALTER TABLE \"public\".\"brilliant_move_weekly_winner\" ADD CONSTRAINT \"brilliant_move_weekly_winner_week_start_unique\" UNIQUE (\"week_start\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"brilliant_move_weekly_winner_week_start_unique\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "brilliant_move_weekly_winner_week_start_unique",
+          "public",
+          "\"public\".\"brilliant_move_weekly_winner\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.vote.vote_submission_admin_unique",
+    "label": "Add unique constraint on \"vote\" (submission_id, admin_id)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "vote_submission_admin_unique",
+        "table": "vote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"vote_submission_admin_unique\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "vote_submission_admin_unique",
+          "public",
+          "\"public\".\"vote\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"vote_submission_admin_unique\"",
+        "sql": "ALTER TABLE \"public\".\"vote\" ADD CONSTRAINT \"vote_submission_admin_unique\" UNIQUE (\"submission_id\", \"admin_id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"vote_submission_admin_unique\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "vote_submission_admin_unique",
+          "public",
+          "\"public\".\"vote\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.vote.vote_submission_member_unique",
+    "label": "Add unique constraint on \"vote\" (submission_id, user_id)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "vote_submission_member_unique",
+        "table": "vote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"vote_submission_member_unique\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "vote_submission_member_unique",
+          "public",
+          "\"public\".\"vote\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"vote_submission_member_unique\"",
+        "sql": "ALTER TABLE \"public\".\"vote\" ADD CONSTRAINT \"vote_submission_member_unique\" UNIQUE (\"submission_id\", \"user_id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"vote_submission_member_unique\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "vote_submission_member_unique",
+          "public",
+          "\"public\".\"vote\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.brilliant_move_submission.brilliant_move_submission_created_at_idx",
+    "label": "Create index \"brilliant_move_submission_created_at_idx\" on \"brilliant_move_submission\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "brilliant_move_submission_created_at_idx",
+        "table": "brilliant_move_submission"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"brilliant_move_submission_created_at_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"brilliant_move_submission_created_at_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"brilliant_move_submission_created_at_idx\"",
+        "sql": "CREATE INDEX \"brilliant_move_submission_created_at_idx\" ON \"public\".\"brilliant_move_submission\" (\"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"brilliant_move_submission_created_at_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"brilliant_move_submission_created_at_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.brilliant_move_weekly_winner.brilliant_move_weekly_winner_submission_id_idx",
+    "label": "Create index \"brilliant_move_weekly_winner_submission_id_idx\" on \"brilliant_move_weekly_winner\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "brilliant_move_weekly_winner_submission_id_idx",
+        "table": "brilliant_move_weekly_winner"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"brilliant_move_weekly_winner_submission_id_idx\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"brilliant_move_weekly_winner_submission_id_idx\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"brilliant_move_weekly_winner_submission_id_idx\"",
+        "sql": "CREATE INDEX \"brilliant_move_weekly_winner_submission_id_idx\" ON \"public\".\"brilliant_move_weekly_winner\" (\"submission_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"brilliant_move_weekly_winner_submission_id_idx\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"brilliant_move_weekly_winner_submission_id_idx\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.vote.vote_admin_id_idx_78cc3551",
+    "label": "Create index \"vote_admin_id_idx_78cc3551\" on \"vote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "vote_admin_id_idx_78cc3551",
+        "table": "vote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"vote_admin_id_idx_78cc3551\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"vote_admin_id_idx_78cc3551\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"vote_admin_id_idx_78cc3551\"",
+        "sql": "CREATE INDEX \"vote_admin_id_idx_78cc3551\" ON \"public\".\"vote\" (\"admin_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"vote_admin_id_idx_78cc3551\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"vote_admin_id_idx_78cc3551\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.brilliant_move_weekly_winner.brilliant_move_weekly_winner_submission_id_fkey",
+    "label": "Add foreign key \"brilliant_move_weekly_winner_submission_id_fkey\" on \"brilliant_move_weekly_winner\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "brilliant_move_weekly_winner_submission_id_fkey",
+        "table": "brilliant_move_weekly_winner"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"brilliant_move_weekly_winner_submission_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "brilliant_move_weekly_winner_submission_id_fkey",
+          "public",
+          "\"public\".\"brilliant_move_weekly_winner\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"brilliant_move_weekly_winner_submission_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"brilliant_move_weekly_winner\"\nADD CONSTRAINT \"brilliant_move_weekly_winner_submission_id_fkey\"\nFOREIGN KEY (\"submission_id\")\nREFERENCES \"public\".\"brilliant_move_submission\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"brilliant_move_weekly_winner_submission_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "brilliant_move_weekly_winner_submission_id_fkey",
+          "public",
+          "\"public\".\"brilliant_move_weekly_winner\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.vote.vote_admin_id_fkey",
+    "label": "Add foreign key \"vote_admin_id_fkey\" on \"vote\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "vote_admin_id_fkey",
+        "table": "vote"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"vote_admin_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "vote_admin_id_fkey",
+          "public",
+          "\"public\".\"vote\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"vote_admin_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"vote\"\nADD CONSTRAINT \"vote_admin_id_fkey\"\nFOREIGN KEY (\"admin_id\")\nREFERENCES \"public\".\"admin\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"vote_admin_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "vote_admin_id_fkey",
+          "public",
+          "\"public\".\"vote\""
+        ]
+      }
+    ]
+  }
+]

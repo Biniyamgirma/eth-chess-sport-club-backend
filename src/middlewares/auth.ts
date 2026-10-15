@@ -4,6 +4,8 @@ import type { NextFunction, Request, Response } from 'express';
 import { prisma } from '../config/prisma.js';
 import { AppError } from './errorHandler.js';
 import { verifyToken } from '../utils/jwt.js';
+import { isMemberBlocked } from '../utils/member-status.js';
+import { isVendorBlocked } from '../utils/vendor-status.js';
 
 const orm = prisma.orm as any;
 
@@ -46,7 +48,7 @@ const authenticateBot = async (req: Request) => {
   }
 
   const member = await orm.public.Member.where({ chat_id: chatId }).first();
-  if (!member || member.is_deleted === 1) {
+  if (!member || member.is_deleted === 1 || isMemberBlocked(member)) {
     throw new AppError('Authentication required', 401);
   }
 
@@ -69,6 +71,12 @@ const authenticateJwt = async (req: Request) => {
   if (!user) {
     throw new AppError('User no longer exists or access is revoked', 401);
   }
+  if (payload.role === 'member' && isMemberBlocked(user)) {
+    throw new AppError('Member account is blocked', 403);
+  }
+  if (payload.role === 'vendor' && isVendorBlocked(user)) {
+    throw new AppError('Venue owner account is blocked', 403);
+  }
 
   req.user = {
     id: payload.userId,
@@ -80,7 +88,6 @@ const authenticateJwt = async (req: Request) => {
 export const requireAuth = async (req: Request, _res: Response, next: NextFunction) => {
   try {
     if (req.headers[BOT_SECRET_HEADER] !== undefined) {
-      console.log('Authenticating bot request...');
       await authenticateBot(req);
     } else {
       await authenticateJwt(req);

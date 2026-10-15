@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'aa7efb013e57f422c972013eb145cb4934ecb241c5a57b9b448ce941ab43541e'>;
+  StorageHashBase<'c8c5710222a03650944964751dcebf0b26eba58a7795dfe1dedbe1ab4f1a3577'>;
 export type ExecutionHash = ExecutionHashBase<string>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
@@ -269,6 +269,14 @@ export type FieldOutputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
+    readonly BrilliantMoveWeeklyWinner: {
+      readonly id: CodecTypes['pg/int4@1']['output'];
+      readonly week_start: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly submission_id: CodecTypes['pg/int4@1']['output'];
+      readonly total_votes: CodecTypes['pg/int4@1']['output'];
+      readonly admin_votes: CodecTypes['pg/int4@1']['output'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    };
     readonly CancellationReason: {
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly name: CodecTypes['pg/text@1']['output'] | null;
@@ -400,6 +408,7 @@ export type FieldOutputTypes = {
       readonly chat_id: CodecTypes['pg/text@1']['output'] | null;
       readonly telegram_username: CodecTypes['pg/text@1']['output'] | null;
       readonly whats_up_username: CodecTypes['pg/text@1']['output'] | null;
+      readonly status: CodecTypes['pg/int4@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -436,6 +445,7 @@ export type FieldOutputTypes = {
     readonly Vote: {
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly user_id: CodecTypes['pg/text@1']['output'] | null;
+      readonly admin_id: CodecTypes['pg/int4@1']['output'] | null;
       readonly vote_type: CodecTypes['pg/text@1']['output'] | null;
       readonly submission_id: CodecTypes['pg/int4@1']['output'] | null;
       readonly status: CodecTypes['pg/int4@1']['output'] | null;
@@ -473,6 +483,14 @@ export type FieldInputTypes = {
       readonly is_awarded: CodecTypes['pg/int4@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+    };
+    readonly BrilliantMoveWeeklyWinner: {
+      readonly id: CodecTypes['pg/int4@1']['input'];
+      readonly week_start: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly submission_id: CodecTypes['pg/int4@1']['input'];
+      readonly total_votes: CodecTypes['pg/int4@1']['input'];
+      readonly admin_votes: CodecTypes['pg/int4@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
     readonly CancellationReason: {
       readonly id: CodecTypes['pg/int4@1']['input'];
@@ -605,6 +623,7 @@ export type FieldInputTypes = {
       readonly chat_id: CodecTypes['pg/text@1']['input'] | null;
       readonly telegram_username: CodecTypes['pg/text@1']['input'] | null;
       readonly whats_up_username: CodecTypes['pg/text@1']['input'] | null;
+      readonly status: CodecTypes['pg/int4@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -641,6 +660,7 @@ export type FieldInputTypes = {
     readonly Vote: {
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly user_id: CodecTypes['pg/text@1']['input'] | null;
+      readonly admin_id: CodecTypes['pg/int4@1']['input'] | null;
       readonly vote_type: CodecTypes['pg/text@1']['input'] | null;
       readonly submission_id: CodecTypes['pg/int4@1']['input'] | null;
       readonly status: CodecTypes['pg/int4@1']['input'] | null;
@@ -678,6 +698,14 @@ export type StorageColumnTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly user_id: CodecTypes['pg/text@1']['output'] | null;
       readonly week_number: CodecTypes['pg/int4@1']['output'] | null;
+    };
+    readonly brilliant_move_weekly_winner: {
+      readonly admin_votes: CodecTypes['pg/int4@1']['output'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly id: CodecTypes['pg/int4@1']['output'];
+      readonly submission_id: CodecTypes['pg/int4@1']['output'];
+      readonly total_votes: CodecTypes['pg/int4@1']['output'];
+      readonly week_start: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
     readonly cancellation_reason: {
       readonly id: CodecTypes['pg/int4@1']['output'];
@@ -808,6 +836,7 @@ export type StorageColumnTypes = {
       readonly password: CodecTypes['pg/text@1']['output'] | null;
       readonly phone_number: CodecTypes['pg/text@1']['output'] | null;
       readonly role: CodecTypes['pg/int4@1']['output'] | null;
+      readonly status: CodecTypes['pg/int4@1']['output'];
       readonly telegram_username: CodecTypes['pg/text@1']['output'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly venue_id: CodecTypes['pg/int4@1']['output'] | null;
@@ -844,6 +873,7 @@ export type StorageColumnTypes = {
       readonly venue_id: CodecTypes['pg/int4@1']['output'] | null;
     };
     readonly vote: {
+      readonly admin_id: CodecTypes['pg/int4@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly status: CodecTypes['pg/int4@1']['output'] | null;
@@ -884,6 +914,14 @@ export type StorageColumnInputTypes = {
       readonly user_id: CodecTypes['pg/text@1']['input'] | null;
       readonly week_number: CodecTypes['pg/int4@1']['input'] | null;
     };
+    readonly brilliant_move_weekly_winner: {
+      readonly admin_votes: CodecTypes['pg/int4@1']['input'];
+      readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly id: CodecTypes['pg/int4@1']['input'];
+      readonly submission_id: CodecTypes['pg/int4@1']['input'];
+      readonly total_votes: CodecTypes['pg/int4@1']['input'];
+      readonly week_start: CodecTypes['pg/timestamptz-temporal@1']['input'];
+    };
     readonly cancellation_reason: {
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly name: CodecTypes['pg/text@1']['input'] | null;
@@ -1013,6 +1051,7 @@ export type StorageColumnInputTypes = {
       readonly password: CodecTypes['pg/text@1']['input'] | null;
       readonly phone_number: CodecTypes['pg/text@1']['input'] | null;
       readonly role: CodecTypes['pg/int4@1']['input'] | null;
+      readonly status: CodecTypes['pg/int4@1']['input'];
       readonly telegram_username: CodecTypes['pg/text@1']['input'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly venue_id: CodecTypes['pg/int4@1']['input'] | null;
@@ -1049,6 +1088,7 @@ export type StorageColumnInputTypes = {
       readonly venue_id: CodecTypes['pg/int4@1']['input'] | null;
     };
     readonly vote: {
+      readonly admin_id: CodecTypes['pg/int4@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly status: CodecTypes['pg/int4@1']['input'] | null;
@@ -1093,8 +1133,9 @@ export namespace Models {
     approved_invoices: public_Invoice[];
     created_tables: public_VenueTable[];
     managed_venues: public_Venue[];
+    votes: public_Vote[];
     readonly [RelationKeys]?:
-      'admin_role' | 'approved_invoices' | 'created_tables' | 'managed_venues';
+      'admin_role' | 'approved_invoices' | 'created_tables' | 'managed_venues' | 'votes';
   };
   export type public_AdminRole = {
     id: CodecTypes['pg/int4@1']['output'];
@@ -1143,6 +1184,7 @@ export namespace Models {
     chat_id: CodecTypes['pg/text@1']['output'] | null;
     telegram_username: CodecTypes['pg/text@1']['output'] | null;
     whats_up_username: CodecTypes['pg/text@1']['output'] | null;
+    status: CodecTypes['pg/int4@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     admin_role: public_AdminRole | null;
@@ -1164,19 +1206,32 @@ export namespace Models {
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     member: public_Member | null;
     votes: public_Vote[];
-    readonly [RelationKeys]?: 'member' | 'votes';
+    weekly_winners: public_BrilliantMoveWeeklyWinner[];
+    readonly [RelationKeys]?: 'member' | 'votes' | 'weekly_winners';
   };
   export type public_Vote = {
     id: CodecTypes['pg/int4@1']['output'];
     user_id: CodecTypes['pg/text@1']['output'] | null;
+    admin_id: CodecTypes['pg/int4@1']['output'] | null;
     vote_type: CodecTypes['pg/text@1']['output'] | null;
     submission_id: CodecTypes['pg/int4@1']['output'] | null;
     status: CodecTypes['pg/int4@1']['output'] | null;
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    admin: public_Admin | null;
     member: public_Member | null;
     submission: public_BrilliantMoveSubmission | null;
-    readonly [RelationKeys]?: 'member' | 'submission';
+    readonly [RelationKeys]?: 'admin' | 'member' | 'submission';
+  };
+  export type public_BrilliantMoveWeeklyWinner = {
+    id: CodecTypes['pg/int4@1']['output'];
+    week_start: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    submission_id: CodecTypes['pg/int4@1']['output'];
+    total_votes: CodecTypes['pg/int4@1']['output'];
+    admin_votes: CodecTypes['pg/int4@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    submission: public_BrilliantMoveSubmission;
+    readonly [RelationKeys]?: 'submission';
   };
   export type public_District = {
     id: CodecTypes['pg/int4@1']['output'];
@@ -1358,6 +1413,7 @@ export declare const models: {
     Vendor: Models.public_Vendor;
     BrilliantMoveSubmission: Models.public_BrilliantMoveSubmission;
     Vote: Models.public_Vote;
+    BrilliantMoveWeeklyWinner: Models.public_BrilliantMoveWeeklyWinner;
     District: Models.public_District;
     Member: Models.public_Member;
     MemberDetails: Models.public_MemberDetails;
@@ -1553,6 +1609,11 @@ type ContractBase = Omit<
               uniques: readonly [];
               indexes: readonly [
                 {
+                  readonly name: 'brilliant_move_submission_created_at_idx';
+                  readonly columns: readonly ['createdAt'];
+                  readonly unique: false;
+                },
+                {
                   readonly name: 'brilliant_move_submission_user_id_idx_6c952402';
                   readonly prefix: 'brilliant_move_submission_user_id_idx';
                   readonly columns: readonly ['user_id'];
@@ -1569,6 +1630,72 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'members';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
+            readonly brilliant_move_weekly_winner: {
+              columns: {
+                readonly id: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                };
+                readonly week_start: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                };
+                readonly submission_id: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
+                readonly total_votes: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
+                readonly admin_votes: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                };
+                readonly createdAt: {
+                  readonly nativeType: 'timestamptz';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                  readonly nullable: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [
+                {
+                  readonly columns: readonly ['week_start'];
+                  readonly name: 'brilliant_move_weekly_winner_week_start_unique';
+                },
+              ];
+              indexes: readonly [
+                {
+                  readonly name: 'brilliant_move_weekly_winner_submission_id_idx';
+                  readonly columns: readonly ['submission_id'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'brilliant_move_weekly_winner';
+                    readonly columns: readonly ['submission_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'brilliant_move_submission';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -2509,6 +2636,15 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: true;
                 };
+                readonly status: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 1>;
+                  };
+                };
                 readonly createdAt: {
                   readonly nativeType: 'timestamptz';
                   readonly codecId: 'pg/timestamptz-temporal@1';
@@ -2827,6 +2963,11 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: true;
                 };
+                readonly admin_id: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                };
                 readonly vote_type: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
@@ -2854,7 +2995,16 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [];
+              uniques: readonly [
+                {
+                  readonly columns: readonly ['submission_id', 'user_id'];
+                  readonly name: 'vote_submission_member_unique';
+                },
+                {
+                  readonly columns: readonly ['submission_id', 'admin_id'];
+                  readonly name: 'vote_submission_admin_unique';
+                },
+              ];
               indexes: readonly [
                 {
                   readonly name: 'vote_submission_id_idx_82020796';
@@ -2866,6 +3016,12 @@ type ContractBase = Omit<
                   readonly name: 'vote_user_id_idx_6c952402';
                   readonly prefix: 'vote_user_id_idx';
                   readonly columns: readonly ['user_id'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'vote_admin_id_idx_78cc3551';
+                  readonly prefix: 'vote_admin_id_idx';
+                  readonly columns: readonly ['admin_id'];
                   readonly unique: false;
                 },
               ];
@@ -2891,6 +3047,18 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'members';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'vote';
+                    readonly columns: readonly ['admin_id'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'admin';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -2920,6 +3088,10 @@ type ContractBase = Omit<
       readonly model: 'BrilliantMoveSubmission';
     };
     readonly vote: { readonly namespace: 'public' & NamespaceId; readonly model: 'Vote' };
+    readonly brilliant_move_weekly_winner: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'BrilliantMoveWeeklyWinner';
+    };
     readonly district: { readonly namespace: 'public' & NamespaceId; readonly model: 'District' };
     readonly members: { readonly namespace: 'public' & NamespaceId; readonly model: 'Member' };
     readonly member_details: {
@@ -3040,6 +3212,14 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['responsible_person'];
+                };
+              };
+              readonly votes: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Vote' };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['admin_id'];
                 };
               };
             };
@@ -3181,6 +3361,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['submission_id'];
                 };
               };
+              readonly weekly_winners: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'BrilliantMoveWeeklyWinner';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['submission_id'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'brilliant_move_submission';
@@ -3197,6 +3388,66 @@ type ContractBase = Omit<
                 readonly is_awarded: { readonly column: 'is_awarded' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+              };
+            };
+          };
+          readonly BrilliantMoveWeeklyWinner: {
+            readonly fields: {
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly week_start: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
+              readonly submission_id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly total_votes: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly admin_votes: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-temporal@1';
+                };
+              };
+            };
+            readonly relations: {
+              readonly submission: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'BrilliantMoveSubmission';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['submission_id'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'brilliant_move_weekly_winner';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly id: { readonly column: 'id' };
+                readonly week_start: { readonly column: 'week_start' };
+                readonly submission_id: { readonly column: 'submission_id' };
+                readonly total_votes: { readonly column: 'total_votes' };
+                readonly admin_votes: { readonly column: 'admin_votes' };
+                readonly createdAt: { readonly column: 'createdAt' };
               };
             };
           };
@@ -4240,6 +4491,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly status: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -4307,6 +4562,7 @@ type ContractBase = Omit<
                 readonly chat_id: { readonly column: 'chat_id' };
                 readonly telegram_username: { readonly column: 'telegram_username' };
                 readonly whats_up_username: { readonly column: 'whats_up_username' };
+                readonly status: { readonly column: 'status' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
@@ -4592,6 +4848,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly admin_id: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly vote_type: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -4620,6 +4880,18 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly admin: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Admin';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['admin_id'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
               readonly member: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -4651,6 +4923,7 @@ type ContractBase = Omit<
               readonly fields: {
                 readonly id: { readonly column: 'id' };
                 readonly user_id: { readonly column: 'user_id' };
+                readonly admin_id: { readonly column: 'admin_id' };
                 readonly vote_type: { readonly column: 'vote_type' };
                 readonly submission_id: { readonly column: 'submission_id' };
                 readonly status: { readonly column: 'status' };

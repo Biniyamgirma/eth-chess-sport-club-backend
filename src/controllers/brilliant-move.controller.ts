@@ -46,7 +46,10 @@ export const listBrilliantMovesForTelegram = async (
       throw new AppError('Authentication required', 401);
     }
 
-    const submissions = await brilliantMoveService.listCurrentWeekSubmissions(req.member.id);
+    const submissions = await brilliantMoveService.listCurrentWeekSubmissions({
+      id: req.member.id,
+      role: 'member',
+    });
     return res.status(200).json({ success: true, data: submissions });
   } catch (error) {
     return next(error);
@@ -92,10 +95,62 @@ export const editBrilliantMoveSubmission = async (req: Request, res: Response, n
   }
 };
 
-export const listBrilliantMoves = async (_req: Request, res: Response, next: NextFunction) => {
+const getVoter = (req: Request) => ({
+  id: String(req.user!.id),
+  role: req.user!.role as 'admin' | 'member',
+});
+
+export const listBrilliantMoves = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const items = await brilliantMoveService.listSubmissions();
+    const items = await brilliantMoveService.listSubmissions(getVoter(req));
     return res.status(200).json({ success: true, data: items });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const listThisWeekBrilliantMoves = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const items = await brilliantMoveService.listCurrentWeekSubmissions(getVoter(req));
+    return res.status(200).json({ success: true, data: items });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const listAllBrilliantMoves = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const page = Number(req.query.page ?? 1);
+    const pageSize = Number(req.query.page_size ?? 12);
+    const sort = req.query.sort === 'most_votes' ? 'most_votes' : 'newest';
+    const result = await brilliantMoveService.listAllSubmissions(
+      getVoter(req),
+      page,
+      pageSize,
+      sort,
+    );
+    return res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const listWeeklyBrilliantMoveWinners = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const winners = await brilliantMoveService.listWeeklyWinners(getVoter(req));
+    return res.status(200).json({ success: true, data: winners });
   } catch (error) {
     return next(error);
   }
@@ -139,16 +194,28 @@ export const updateBrilliantMoveRankAndAward = async (req: Request, res: Respons
 
 export const voteOnBrilliantMove = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    if (!req.user) {
-      throw new AppError('Authentication required', 401);
-    }
-
-    const vote = await brilliantMoveService.voteOnSubmission(
-      String(req.user.id),
+    const vote = await brilliantMoveService.setVoteOnSubmission(
+      getVoter(req),
       Number(req.params.id),
-      String(req.body.vote_type ?? 'upvote'),
+      true,
     );
+    return res.status(200).json({ success: true, data: vote });
+  } catch (error) {
+    return next(error);
+  }
+};
 
+export const removeVoteOnBrilliantMove = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const vote = await brilliantMoveService.setVoteOnSubmission(
+      getVoter(req),
+      Number(req.params.id),
+      false,
+    );
     return res.status(200).json({ success: true, data: vote });
   } catch (error) {
     return next(error);

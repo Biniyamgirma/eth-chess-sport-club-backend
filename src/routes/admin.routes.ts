@@ -3,6 +3,7 @@ import { Router } from 'express';
 import {
   createAdminRole,
   deleteAdminRole,
+  getCurrentAdminAccess,
   getAdminDashboardSummary,
   getAdminRoles,
   loginAdmin,
@@ -26,6 +27,7 @@ import {
 const router = Router();
 ///requireAuth, requireAdminLevel(6),
 router.post('/login', validate(adminLoginSchema), loginAdmin);
+router.get('/me', requireAuth, requireRole(['admin']), getCurrentAdminAccess);
 router.post('/register',requireAuth, requireAdminLevel(6),  validate(adminRegisterSchema), registerAdmin);
 router.patch('/:id', requireAuth, requireAdminLevel(6), validate(adminRoleIdSchema.merge(adminUpdateSchema)), updateAdmin);
 router.get('/dashboard-summary', requireAuth, requireRole(['admin']), getAdminDashboardSummary);
